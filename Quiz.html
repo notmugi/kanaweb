@@ -1,0 +1,1177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kana Quiz</title>
+<style>
+  /* ===========================================================
+     Kana Quiz — embedded chrome-less; styled to live inside the
+     Personal Knowledge Portal's note pane.
+     =========================================================== */
+
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    font-family: Verdana, Tahoma, "MS Sans Serif", Geneva, sans-serif;
+    font-size: 11px;
+    color: #1a1a1a;
+    background: #ece9d8 url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='8' height='8'><rect width='8' height='8' fill='%23ece9d8'/><path d='M-2,2 l4,-4 M0,8 l8,-8 M6,10 l4,-4' stroke='%23d4ccb4' stroke-width='1'/></svg>");
+  }
+  a { color: #4a7ac8; text-decoration: underline; cursor: pointer; }
+  a:visited { color: #6a4a9c; }
+  a:hover { color: #c84a14; }
+
+  .quiz-root { padding: 8px; }
+
+  /* ===== Webparts ===== */
+  .webpart {
+    background: #fff;
+    border: 1px solid #a8a8a8;
+    margin-bottom: 10px;
+    box-shadow: 2px 2px 0 #c4b896;
+  }
+  .webpart-header {
+    background: linear-gradient(to bottom, #8ab4e8 0%, #4a7ac8 100%);
+    border-bottom: 1px solid #2a5a9a;
+    color: #fff;
+    font-weight: bold;
+    font-size: 11px;
+    padding: 4px 8px;
+    min-height: 24px;
+    line-height: 16px;
+    text-shadow: 1px 1px 0 rgba(0,0,0,0.3);
+    display: flex; align-items: center;
+    user-select: none;
+  }
+  .webpart-header > span:first-child { flex: 1; text-align: left; }
+  .webpart-header > span:first-child::before {
+    content: "▼";
+    display: inline-block;
+    width: 12px;
+    font-size: 9px;
+    margin-right: 4px;
+    color: #fff;
+    text-shadow: 1px 1px 0 rgba(0,0,0,0.3);
+  }
+  .webpart-header .actions { font-size: 10px; font-weight: normal; color: #e8eef7; }
+  .webpart-body { padding: 8px; }
+
+  /* Color variants */
+  .wp-orange .webpart-header {
+    background: linear-gradient(to bottom, #ffd690 0%, #d48a00 100%);
+    border-bottom-color: #8a5a00;
+    text-shadow: 1px 1px 0 rgba(120,60,0,0.5);
+  }
+  .wp-green .webpart-header {
+    background: linear-gradient(to bottom, #c4e0a0 0%, #5a8a3a 100%);
+    border-bottom-color: #2a5a10;
+    text-shadow: 1px 1px 0 rgba(0,60,0,0.4);
+  }
+  .wp-red .webpart-header {
+    background: linear-gradient(to bottom, #f4a4a4 0%, #c84a4a 100%);
+    border-bottom-color: #8a2020;
+    text-shadow: 1px 1px 0 rgba(80,0,0,0.4);
+  }
+  .wp-gold .webpart-header {
+    background: linear-gradient(to bottom, #fff5d4 0%, #d8a830 100%);
+    border-bottom-color: #8a6a10;
+    color: #5a3a00;
+    text-shadow: 1px 1px 0 rgba(255,255,255,0.5);
+  }
+
+  /* ===== Page head (title strip above the ticker) ===== */
+  .actions-row {
+    background: #fff;
+    border-top: 1px solid #b8b4a8;
+    padding: 5px 10px;
+    display: flex; gap: 6px; align-items: center; flex-wrap: wrap;
+    font-size: 11px;
+    margin-top: 6px;
+  }
+  .actions-row .meta {
+    min-width: 0;
+    color: #555; font-size: 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .actions-row .meta b { color: #4a7ac8; }
+  /* Equal-weight flexible spacers on each side of the typer pin it to
+     the row's visual center, regardless of how wide .meta or the
+     button group are. */
+  .actions-row .ar-spacer { flex: 1 1 0; min-width: 8px; }
+  /* Timer — sits centered between meta and buttons */
+  .actions-row .timer {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 22px;
+    padding: 0 10px;
+    background: linear-gradient(to bottom, #fff5d4 0%, #f4d98a 100%);
+    border: 1px solid #c8a040;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.5), 1px 1px 0 #c4b896;
+    color: #5a3a00;
+    font: bold 12px "Courier New", monospace;
+    text-shadow: 1px 1px 0 rgba(255,255,255,0.5);
+    white-space: nowrap;
+  }
+  .actions-row .timer.running {
+    background: linear-gradient(to bottom, #c4e0a0 0%, #8aba6a 100%);
+    border-color: #5a8a3a;
+    color: #2a5a10;
+  }
+  .actions-row .timer.done {
+    background: linear-gradient(to bottom, #8ab4e8 0%, #4a7ac8 100%);
+    border-color: #2a5a9a;
+    color: #fff;
+    text-shadow: 1px 1px 0 rgba(0,0,0,0.3);
+  }
+
+  /* ===== Buttons ===== */
+  .ph-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    gap: 4px;
+    height: 22px; line-height: 20px;
+    padding: 0 10px;
+    background: linear-gradient(to bottom, #fff 0%, #e0dcd4 100%);
+    border: 1px solid #a8a8a8;
+    color: #000;
+    font: 11px Verdana, Tahoma, sans-serif;
+    cursor: pointer;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .ph-btn:hover {
+    background: linear-gradient(to bottom, #ffce4a 0%, #c8a020 100%);
+    border-color: #8a7010;
+    color: #4a3a0a;
+  }
+  .ph-btn:active {
+    background: linear-gradient(to bottom, #d8d4cc 0%, #fff 100%);
+  }
+  .ph-btn.primary {
+    background: linear-gradient(to bottom, #ffce4a 0%, #c8a020 100%);
+    border-color: #8a7010;
+    color: #4a3a0a;
+    font-weight: bold;
+  }
+  .ph-btn.primary:hover {
+    background: linear-gradient(to bottom, #ffe080 0%, #d8b840 100%);
+  }
+
+  /* ===== Ticker ===== */
+  .ticker-frame {
+    border: 1px solid #2a5a9a;
+    background: #4a5764;
+    box-shadow: inset 0 0 0 1px #1a3a6b;
+  }
+  .ticker {
+    position: relative;
+    background:
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.09375 0'/></filter><rect width='32' height='32' filter='url(%23n)'/></svg>"),
+      linear-gradient(to bottom, #5a6774 0%, #3a4754 100%);
+    color: #fff;
+    height: 180px;
+    overflow: hidden;
+    user-select: none;
+  }
+  .marker {
+    position: absolute;
+    top: 8px; bottom: 8px;
+    left: 50%;
+    width: 0;
+    border-left: 1px dashed rgba(255,206,74,0.55);
+    border-right: 1px dashed rgba(255,206,74,0.55);
+    margin-left: -1px;
+    pointer-events: none;
+    filter: url(#chalk);
+  }
+  .marker::before, .marker::after {
+    content: "";
+    position: absolute;
+    left: 50%; transform: translateX(-50%);
+    border-style: solid;
+  }
+  .marker::before {
+    top: -1px;
+    border-width: 8px 6px 0 6px;
+    border-color: #ffce4a transparent transparent transparent;
+    opacity: 0.85;
+  }
+  .marker::after {
+    bottom: -1px;
+    border-width: 0 6px 8px 6px;
+    border-color: transparent transparent #ffce4a transparent;
+    opacity: 0.85;
+  }
+  .track {
+    position: absolute;
+    top: 0; left: 0;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+    will-change: transform;
+  }
+  .cell {
+    position: relative;
+    width: 92px;
+    flex: 0 0 92px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* "Chalkduster" exists on macOS; "Bradley Hand" / "Comic Sans MS" are
+       acceptable fallbacks on other platforms. Japanese glyphs always fall
+       through to the JP fonts since the Latin chalk fonts don't cover kana. */
+    font-family: "Chalkduster", "Bradley Hand", "Hiragino Sans", "Yu Gothic", "Noto Sans JP", "MS Mincho", serif;
+    font-size: 78px;
+    font-weight: 400;
+    color: #f4f0e8;
+    /* chalk halo — soft white glow + faint dust around the glyph */
+    text-shadow:
+      0 0 1px rgba(255,255,255,0.55),
+      0 0 4px rgba(255,255,255,0.15),
+      1px 1px 0 rgba(255,255,255,0.10);
+  }
+  /* Only the kana glyph itself gets the chalk filter — keeps the
+     romaji .hint above it crisp and readable. */
+  .cell .kana {
+    filter: url(#chalk);
+  }
+  .cell .hint {
+    position: absolute;
+    top: 14px;
+    left: 0; right: 0;
+    text-align: center;
+    font-size: 13px;
+    font-family: Verdana, Tahoma, sans-serif;
+    font-weight: bold;
+    color: #fff;
+    text-shadow: 1px 1px 0 rgba(0,0,0,0.4);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  /* Tinted chalk states — keep the dusty filter, just shift the hue.
+     Upcoming chalk fades like an old erased mark. */
+  .cell.upcoming {
+    color: rgba(244,240,232,0.32);
+    text-shadow: 0 0 1px rgba(255,255,255,0.15);
+  }
+  .cell.current  {
+    color: #fffbe6;
+    text-shadow:
+      0 0 1px rgba(255,255,255,0.7),
+      0 0 6px rgba(255,255,255,0.25),
+      1px 1px 0 rgba(255,255,255,0.15);
+  }
+  .cell.correct  { color: #b6e89c; text-shadow: 0 0 1px rgba(182,232,156,0.6), 0 0 5px rgba(182,232,156,0.25); }
+  .cell.correct .hint { opacity: 0.95; color: #aee0a0; text-shadow: 1px 1px 0 rgba(0,0,0,0.4); }
+  .cell.wrong    { color: #f4a4a4; text-shadow: 0 0 1px rgba(244,164,164,0.6), 0 0 5px rgba(244,164,164,0.25); }
+  .cell.wrong .hint { opacity: 1; color: #f4a4a4; text-shadow: 1px 1px 0 rgba(0,0,0,0.4); }
+
+  /* typer input — lives in the actions-row below the ticker */
+  #typer {
+    width: 160px;
+    text-align: center;
+    font: bold 14px "Courier New", ui-monospace, monospace;
+    letter-spacing: 3px;
+    padding: 2px 8px;
+    height: 22px;
+    background: linear-gradient(to bottom, #f6efd8 0%, #fdfaee 30%, #ffffff 100%);
+    border: 1px solid #2a5a9a;
+    box-shadow:
+      inset 1px 1px 0 rgba(0,0,0,0.18),
+      0 0 0 1px rgba(255,206,74,0.6);
+    color: #1a1a1a;
+    outline: none;
+    caret-color: #4a7ac8;
+    border-radius: 0;
+  }
+  #typer:focus {
+    box-shadow: inset 1px 1px 0 rgba(0,0,0,0.15), 0 0 0 2px #ffce4a;
+  }
+  #typer::placeholder {
+    color: #999;
+    font-weight: normal;
+    letter-spacing: normal;
+  }
+
+  /* completion overlay */
+  .done-msg {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, #fff5d4 0%, #f4d98a 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #5a3a00;
+    z-index: 5;
+    border: 1px solid #c8a040;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s;
+  }
+  .done-msg:hover {
+    background: linear-gradient(to bottom, #ffe6a4 0%, #f4c460 100%);
+  }
+  .done-msg:active {
+    background: linear-gradient(to bottom, #f4c460 0%, #ffe6a4 100%);
+    box-shadow: inset 1px 1px 2px rgba(0,0,0,0.15);
+  }
+  .done-msg.hidden { display: none; }
+  .done-title {
+    font: italic bold 26px Georgia, "Trebuchet MS", serif;
+    color: #5a3a00;
+    text-shadow: 1px 1px 0 rgba(255,255,255,0.6);
+    margin-bottom: 6px;
+  }
+  .done-sub { font-size: 12px; color: #6a4a10; }
+  .done-sub b { color: #8a2a14; }
+
+  /* ===== Sub-row of webparts (Session Stats / Timer Log / About) ===== */
+  .sub-row {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    align-items: start;       /* keep each webpart at its own natural height */
+  }
+  .sub-row .webpart { margin-bottom: 0; }
+
+  /* Constrain the timer-log webpart so a long list scrolls inside it
+     instead of pushing Session Stats / About to match its height. */
+  .log-scroll {
+    max-height: 180px;
+    overflow-y: auto;
+  }
+
+  /* stats list */
+  .stat-row {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding: 3px 4px;
+    border-bottom: 1px dotted #c8c8c8;
+    font-size: 11px;
+  }
+  .stat-row:last-child { border-bottom: none; }
+  .stat-row .label { color: #555; }
+  .stat-row .val   { font-weight: bold; color: #4a7ac8; font-size: 13px; }
+  .stat-row.good .val { color: #5a8a3a; }
+  .stat-row.bad  .val { color: #c84a4a; }
+  .stat-row.acc  .val { color: #8a2a14; font-family: "Courier New", monospace; }
+
+  /* timer log table */
+  .log-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+  }
+  .log-table thead th {
+    background: linear-gradient(to bottom, #f4f0e8 0%, #d8d4cc 100%);
+    border-bottom: 1px solid #b8b4a8;
+    text-align: left;
+    padding: 3px 6px;
+    font-weight: bold;
+    color: #4a3a0a;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+  /* Columns: 1=# | 2=Rank | 3=Set | 4=Time | 5=Acc */
+  .log-table thead th:nth-child(1) { width: 22px; text-align: center; }
+  .log-table thead th:nth-child(2) { width: 32px; text-align: center; }
+  .log-table thead th:nth-child(4),
+  .log-table thead th:nth-child(5) { text-align: right; }
+  .log-table tbody td {
+    padding: 3px 6px;
+    border-bottom: 1px dotted #c8c8c8;
+    vertical-align: middle;
+  }
+  .log-table tbody tr:nth-child(odd) td { background: #fbfaf3; }
+  .log-table tbody tr:hover td { background: #fff5d4; }
+  .log-table td.num   { text-align: center; color: #888; font-family: "Courier New", monospace; }
+  .log-table td.set   { color: #1a3a6b; overflow: hidden; text-overflow: ellipsis; max-width: 0; }
+  .log-table td.time  { text-align: right; font: bold 11px "Courier New", monospace; color: #5a3a00; }
+  .log-table td.acc   { text-align: right; font-family: "Courier New", monospace; color: #4a7ac8; }
+
+  /* Rating badge column */
+  .log-table td.rating {
+    text-align: center;
+    font: italic bold 13px Georgia, "Trebuchet MS", serif;
+    padding: 2px 4px;
+    text-shadow: 1px 1px 0 rgba(255,255,255,0.5);
+    letter-spacing: 0.5px;
+  }
+  .log-table td.rating.tier-splus {
+    background: linear-gradient(to bottom, #fff5d4 0%, #ffce4a 100%) !important;
+    color: #8a4a00;
+    border-bottom: 1px solid #c8a040;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.6);
+  }
+  .log-table td.rating.tier-s {
+    background: linear-gradient(to bottom, #ffe080 0%, #d8a830 100%) !important;
+    color: #5a3a00;
+    border-bottom: 1px solid #c8a040;
+  }
+  .log-table td.rating.tier-a {
+    background: linear-gradient(to bottom, #c4e0a0 0%, #8aba6a 100%) !important;
+    color: #2a5a10;
+  }
+  .log-table td.rating.tier-b {
+    background: linear-gradient(to bottom, #b8d0ec 0%, #6b9adc 100%) !important;
+    color: #1a3a6b;
+  }
+  .log-table td.rating.tier-c {
+    background: linear-gradient(to bottom, #e8e6e0 0%, #c8c4b8 100%) !important;
+    color: #4a3a0a;
+  }
+  .log-table td.rating.tier-d {
+    background: linear-gradient(to bottom, #ffd690 0%, #d48a00 100%) !important;
+    color: #5a2a00;
+    text-shadow: 1px 1px 0 rgba(255,255,255,0.4);
+  }
+  .log-table td.rating.tier-f {
+    background: linear-gradient(to bottom, #f4a4a4 0%, #c84a4a 100%) !important;
+    color: #fff;
+    text-shadow: 1px 1px 0 rgba(0,0,0,0.4);
+  }
+  .log-empty td {
+    text-align: center;
+    color: #888;
+    font-style: italic;
+    padding: 8px 6px !important;
+    border-bottom: none !important;
+    background: transparent !important;
+  }
+  .webpart-header .actions a { color: #fff; text-decoration: none; cursor: pointer; }
+  .webpart-header .actions a:hover { color: #ffce4a; text-decoration: underline; }
+  .wp-orange .webpart-header .actions a { color: #fff; }
+  .wp-orange .webpart-header .actions a:hover { color: #4a3a0a; }
+
+  /* ===== Modal ===== */
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(26,58,107,0.45);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
+    padding: 16px;
+  }
+  .modal-backdrop.open { display: flex; }
+  .modal {
+    background: #fff;
+    border: 1px solid #a8a8a8;
+    box-shadow: 4px 4px 0 rgba(0,0,0,0.25), 2px 2px 0 #c4b896;
+    width: 100%;
+    max-width: 580px;
+    max-height: 85vh;
+    overflow: hidden;
+    display: flex; flex-direction: column;
+  }
+  .modal-header {
+    background: linear-gradient(to bottom, #8ab4e8 0%, #4a7ac8 100%);
+    border-bottom: 1px solid #2a5a9a;
+    color: #fff;
+    padding: 5px 10px;
+    font-weight: bold;
+    font-size: 11px;
+    text-shadow: 1px 1px 0 rgba(0,0,0,0.3);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .modal-header .x {
+    color: #fff; cursor: pointer; font-weight: bold;
+    text-decoration: none; padding: 0 4px;
+  }
+  .modal-header .x:hover { color: #ffce4a; }
+  .modal-body {
+    padding: 10px 12px;
+    overflow-y: auto;
+    flex: 1;
+    background: #fff;
+  }
+  .modal-footer {
+    background: linear-gradient(to bottom, #f4f0e8 0%, #e0dcd4 100%);
+    border-top: 1px solid #b8b4a8;
+    padding: 6px 10px;
+    display: flex; gap: 6px; flex-wrap: wrap; align-items: center;
+  }
+  .modal-footer .spacer { flex: 1; }
+
+  .set-group-header {
+    font: italic bold 13px Georgia, "Trebuchet MS", serif;
+    color: #2a5a9a;
+    margin: 10px 0 4px;
+    padding-bottom: 3px;
+    border-bottom: 1px dotted #c8c8c8;
+  }
+  .set-group-header:first-child { margin-top: 0; }
+  .sets {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px,1fr));
+    gap: 4px;
+    margin-bottom: 6px;
+  }
+  .set-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: linear-gradient(to bottom, #fff 0%, #ece9d8 100%);
+    border: 1px solid #a8a8a8;
+    box-shadow: 1px 1px 0 #c4b896;
+    padding: 4px 8px;
+    cursor: pointer;
+    font: 11px Verdana, Tahoma, sans-serif;
+    color: #1a1a1a;
+  }
+  .set-btn:hover {
+    background: linear-gradient(to bottom, #ffce4a 0%, #c8a020 100%);
+    border-color: #8a7010;
+    color: #4a3a0a;
+  }
+  .set-btn.active {
+    background: linear-gradient(to bottom, #fff5d4 0%, #f4d98a 100%);
+    border-color: #c8a040;
+    color: #5a3a00;
+    font-weight: bold;
+  }
+  .set-btn input { accent-color: #4a7ac8; }
+
+  /* ===== Mobile ===== */
+  @media (max-width: 700px) {
+    .sub-row { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 600px) {
+    .cell { width: 72px; flex-basis: 72px; font-size: 60px; }
+    .ticker { height: 160px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Chalk texture filter — applied to ticker glyphs for rough, dusty edges.
+     Hidden SVG; the <filter> is referenced via CSS `filter: url(#chalk)`.
+     Tuned for 78px kana: lower baseFrequency = bigger, more visible streaks;
+     higher displacement scale = chunkier rough edges. -->
+<svg width="0" height="0" style="position:absolute;pointer-events:none;" aria-hidden="true">
+  <defs>
+    <filter id="chalk" x="-20%" y="-20%" width="140%" height="140%">
+      <!-- Coarse noise field — bigger cells so the displacement reads at glyph scale -->
+      <feTurbulence type="fractalNoise" baseFrequency="0.18 0.32" numOctaves="3" seed="7" result="noise"/>
+      <!-- Chunky displacement — visibly rough at 78px -->
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="5" xChannelSelector="R" yChannelSelector="G" result="rough"/>
+      <!-- A second, finer noise pass adds dusty edge speckle -->
+      <feTurbulence type="fractalNoise" baseFrequency="1.4" numOctaves="2" seed="11" result="dust"/>
+      <feDisplacementMap in="rough" in2="dust" scale="1.2" xChannelSelector="R" yChannelSelector="G" result="speckled"/>
+      <!-- Soften micro-edges so it reads as dusty rather than jagged -->
+      <feGaussianBlur in="speckled" stdDeviation="0.4"/>
+    </filter>
+  </defs>
+</svg>
+
+<div class="quiz-root">
+
+  <div class="webpart">
+    <div class="webpart-header">
+      <span>Ticker</span>
+      <span class="actions">romaji drill</span>
+    </div>
+    <div class="webpart-body" style="padding: 6px;">
+      <div class="ticker-frame">
+        <div class="ticker" id="ticker">
+          <div class="marker"></div>
+          <div class="track" id="track"></div>
+          <div class="done-msg hidden" id="doneMsg" role="button" tabindex="0" title="Click to restart">
+            <div class="done-title">All done!</div>
+            <div class="done-sub">Click anywhere to <b>restart</b>.</div>
+          </div>
+        </div>
+      </div>
+      <div class="actions-row">
+        <div class="meta">
+          <b>Selected:</b> <span id="selectedSummary">—</span>
+        </div>
+        <div class="ar-spacer"></div>
+        <input id="typer" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="type romaji…">
+        <div class="ar-spacer"></div>
+        <div class="timer" id="timer" title="Elapsed time">⏱ <span id="timerVal">0:00</span></div>
+        <button class="ph-btn" id="openSets">⚙ Select Kana</button>
+        <button class="ph-btn primary" id="restart">↻ Restart</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="sub-row">
+
+    <div class="webpart wp-green">
+      <div class="webpart-header"><span>Session Stats</span></div>
+      <div class="webpart-body">
+        <div class="stat-row good">
+          <span class="label">Correct</span>
+          <span class="val" id="stCorrect">0</span>
+        </div>
+        <div class="stat-row bad">
+          <span class="label">Wrong</span>
+          <span class="val" id="stWrong">0</span>
+        </div>
+        <div class="stat-row acc">
+          <span class="label">Accuracy</span>
+          <span class="val" id="stAcc">—</span>
+        </div>
+        <div class="stat-row">
+          <span class="label">Remaining</span>
+          <span class="val" id="stRemain">—</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="webpart wp-orange">
+      <div class="webpart-header">
+        <span>Timer Log</span>
+        <span class="actions"><a id="clearLog" title="Clear log">clear</a></span>
+      </div>
+      <div class="webpart-body" style="padding:0;">
+        <div class="log-scroll">
+          <table class="log-table">
+            <thead>
+              <tr><th>#</th><th>Rank</th><th>Set</th><th>Time</th><th>Acc</th></tr>
+            </thead>
+            <tbody id="logBody">
+              <tr class="log-empty"><td colspan="4">no completed runs yet</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="webpart wp-red">
+      <div class="webpart-header"><span>About</span></div>
+      <div class="webpart-body" style="font-size:11px; line-height:1.5;">
+        Drill-style kana practice using standard Hepburn romanization
+        (<b>shi</b>, <b>chi</b>, <b>tsu</b>, <b>fu</b>, <b>ji</b>, <b>zu</b>).
+        Missed characters come back at the end of the queue until correct.
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- set picker modal -->
+<div class="modal-backdrop" id="modal">
+  <div class="modal">
+    <div class="modal-header">
+      <span>▼ Choose kana groups</span>
+      <a class="x" id="modalX" title="Close">✕</a>
+    </div>
+    <div class="modal-body">
+      <div id="setList"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="ph-btn" id="selAll">Select all</button>
+      <button class="ph-btn" id="selBasic">Basic katakana</button>
+      <button class="ph-btn" id="selHira">Basic hiragana</button>
+      <button class="ph-btn" id="selNone">Clear</button>
+      <span class="spacer"></span>
+      <button class="ph-btn" id="cancelSets">Cancel</button>
+      <button class="ph-btn primary" id="applySets">Apply &amp; restart</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ---------- data ----------
+const SETS = {
+  // ---- Katakana ----
+  k_vowels:     { group: "Katakana", label: "Vowels (ア-オ)", chars: [["ア","a"],["イ","i"],["ウ","u"],["エ","e"],["オ","o"]] },
+  k_k:          { group: "Katakana", label: "K-row",          chars: [["カ","ka"],["キ","ki"],["ク","ku"],["ケ","ke"],["コ","ko"]] },
+  k_s:          { group: "Katakana", label: "S-row",          chars: [["サ","sa"],["シ","shi"],["ス","su"],["セ","se"],["ソ","so"]] },
+  k_t:          { group: "Katakana", label: "T-row",          chars: [["タ","ta"],["チ","chi"],["ツ","tsu"],["テ","te"],["ト","to"]] },
+  k_n:          { group: "Katakana", label: "N-row",          chars: [["ナ","na"],["ニ","ni"],["ヌ","nu"],["ネ","ne"],["ノ","no"]] },
+  k_h:          { group: "Katakana", label: "H-row",          chars: [["ハ","ha"],["ヒ","hi"],["フ","fu"],["ヘ","he"],["ホ","ho"]] },
+  k_m:          { group: "Katakana", label: "M-row",          chars: [["マ","ma"],["ミ","mi"],["ム","mu"],["メ","me"],["モ","mo"]] },
+  k_y:          { group: "Katakana", label: "Y-row",          chars: [["ヤ","ya"],["ユ","yu"],["ヨ","yo"]] },
+  k_r:          { group: "Katakana", label: "R-row",          chars: [["ラ","ra"],["リ","ri"],["ル","ru"],["レ","re"],["ロ","ro"]] },
+  k_w:          { group: "Katakana", label: "W-row + ン",     chars: [["ワ","wa"],["ヲ","wo"],["ン","n"]] },
+  k_dakuten:    { group: "Katakana", label: "Dakuten",        chars: [
+                    ["ガ","ga"],["ギ","gi"],["グ","gu"],["ゲ","ge"],["ゴ","go"],
+                    ["ザ","za"],["ジ","ji"],["ズ","zu"],["ゼ","ze"],["ゾ","zo"],
+                    ["ダ","da"],["デ","de"],["ド","do"],
+                    ["バ","ba"],["ビ","bi"],["ブ","bu"],["ベ","be"],["ボ","bo"]] },
+  k_handakuten: { group: "Katakana", label: "Handakuten",     chars: [["パ","pa"],["ピ","pi"],["プ","pu"],["ペ","pe"],["ポ","po"]] },
+
+  // ---- Hiragana ----
+  h_vowels:     { group: "Hiragana", label: "Vowels (あ-お)", chars: [["あ","a"],["い","i"],["う","u"],["え","e"],["お","o"]] },
+  h_k:          { group: "Hiragana", label: "K-row",          chars: [["か","ka"],["き","ki"],["く","ku"],["け","ke"],["こ","ko"]] },
+  h_s:          { group: "Hiragana", label: "S-row",          chars: [["さ","sa"],["し","shi"],["す","su"],["せ","se"],["そ","so"]] },
+  h_t:          { group: "Hiragana", label: "T-row",          chars: [["た","ta"],["ち","chi"],["つ","tsu"],["て","te"],["と","to"]] },
+  h_n:          { group: "Hiragana", label: "N-row",          chars: [["な","na"],["に","ni"],["ぬ","nu"],["ね","ne"],["の","no"]] },
+  h_h:          { group: "Hiragana", label: "H-row",          chars: [["は","ha"],["ひ","hi"],["ふ","fu"],["へ","he"],["ほ","ho"]] },
+  h_m:          { group: "Hiragana", label: "M-row",          chars: [["ま","ma"],["み","mi"],["む","mu"],["め","me"],["も","mo"]] },
+  h_y:          { group: "Hiragana", label: "Y-row",          chars: [["や","ya"],["ゆ","yu"],["よ","yo"]] },
+  h_r:          { group: "Hiragana", label: "R-row",          chars: [["ら","ra"],["り","ri"],["る","ru"],["れ","re"],["ろ","ro"]] },
+  h_w:          { group: "Hiragana", label: "W-row + ん",     chars: [["わ","wa"],["を","wo"],["ん","n"]] },
+  h_dakuten:    { group: "Hiragana", label: "Dakuten",        chars: [
+                    ["が","ga"],["ぎ","gi"],["ぐ","gu"],["げ","ge"],["ご","go"],
+                    ["ざ","za"],["じ","ji"],["ず","zu"],["ぜ","ze"],["ぞ","zo"],
+                    ["だ","da"],["で","de"],["ど","do"],
+                    ["ば","ba"],["び","bi"],["ぶ","bu"],["べ","be"],["ぼ","bo"]] },
+  h_handakuten: { group: "Hiragana", label: "Handakuten",     chars: [["ぱ","pa"],["ぴ","pi"],["ぷ","pu"],["ぺ","pe"],["ぽ","po"]] },
+};
+const BASIC = ["k_vowels","k_k","k_s","k_t","k_n","k_h","k_m","k_y","k_r","k_w"];
+const BASIC_HIRA = ["h_vowels","h_k","h_s","h_t","h_n","h_h","h_m","h_y","h_r","h_w"];
+
+// ---------- config ----------
+// Cell width is read live from the DOM (see currentCellW) so that the CSS
+// @media breakpoint at 600px stays the source of truth. Hard-coding it as a
+// constant caused drift after viewport resizes across the breakpoint.
+const MARKER_FRAC = 0.5;
+const BUFFER_AHEAD = 14;
+
+// Default fallback for the very first call, before any cells exist.
+function currentCellW() {
+  // Prefer the actual rendered width of an existing cell so we're immune to
+  // any CSS changes (media queries, zoom, etc).
+  if (cells.length > 0) {
+    const w = cells[0].getBoundingClientRect().width;
+    if (w > 0) return w;
+  }
+  // No cells yet — fall back to the media query (matches the CSS rule).
+  return window.matchMedia("(max-width:600px)").matches ? 72 : 92;
+}
+
+// ---------- state ----------
+let selected = new Set(BASIC);
+let pool = [];
+let cells = [];
+let trackOffset = 0;
+let currentIndex = 0;
+let stats = { correct: 0, wrong: 0 };
+let queue = [];
+let finished = false;
+let timerStart = 0;        // ms timestamp when user first typed
+let timerInterval = null;  // setInterval handle while running
+let logEntries = [];       // in-memory list of completed runs (also persisted to localStorage when available)
+
+// ---------- persistence (localStorage) ----------
+// Namespaced key so we don't collide with the host portal if this file is
+// served from the same origin as notesapp. All access is wrapped in try/catch
+// so the page degrades gracefully (in-memory only) if storage is blocked
+// (sandboxed iframe, private mode quota, etc).
+const LOG_KEY = "kanaquiz.log.v1";
+const LOG_MAX = 50;        // keep at most this many entries (newest wins)
+
+function saveLog() {
+  try {
+    // Trim to cap before saving — also enforce it in memory so renderLog stays in sync.
+    if (logEntries.length > LOG_MAX) {
+      logEntries = logEntries.slice(-LOG_MAX);
+    }
+    localStorage.setItem(LOG_KEY, JSON.stringify(logEntries));
+  } catch (e) {
+    // localStorage not available (sandbox, quota, etc) — silently fall back to memory only.
+  }
+}
+
+function loadLog() {
+  try {
+    const raw = localStorage.getItem(LOG_KEY);
+    if (!raw) return;
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      // Light validation: each entry should have the expected shape.
+      logEntries = parsed.filter(e =>
+        e && typeof e === "object" &&
+        typeof e.label === "string" &&
+        typeof e.time  === "string" &&
+        typeof e.acc   === "string"
+      ).slice(-LOG_MAX);
+    }
+  } catch (e) {
+    // Corrupt JSON or storage error — start fresh.
+    logEntries = [];
+  }
+}
+
+function clearStoredLog() {
+  try { localStorage.removeItem(LOG_KEY); } catch (e) { /* ignore */ }
+}
+
+// ---------- helpers ----------
+const $ = id => document.getElementById(id);
+function shuffle(a) {
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function buildPool() {
+  pool = [];
+  const seen = new Set();
+  for (const k of selected) {
+    if (!SETS[k]) continue;
+    for (const ch of SETS[k].chars) {
+      if (!seen.has(ch[0])) { seen.add(ch[0]); pool.push(ch); }
+    }
+  }
+  updateSelectedSummary();
+}
+
+function updateSelectedSummary() {
+  let kCount = 0, hCount = 0;
+  for (const k of selected) {
+    if (!SETS[k]) continue;
+    if (SETS[k].group === "Katakana") kCount++;
+    else if (SETS[k].group === "Hiragana") hCount++;
+  }
+  const parts = [];
+  if (kCount) parts.push(kCount + " katakana group" + (kCount===1?"":"s"));
+  if (hCount) parts.push(hCount + " hiragana group" + (hCount===1?"":"s"));
+  $("selectedSummary").textContent = parts.length ? parts.join(", ") + " — " + pool.length + " chars" : "(none)";
+}
+
+// ---------- ticker ----------
+function makeCell(pair) {
+  const el = document.createElement("div");
+  el.className = "cell upcoming";
+  const kana = document.createElement("span");
+  kana.className = "kana";
+  kana.textContent = pair[0];
+  const hint = document.createElement("span");
+  hint.className = "hint";
+  hint.textContent = pair[1];
+  el.appendChild(hint);
+  el.appendChild(kana);
+  el._pair = pair;
+  return el;
+}
+
+function refillAhead() {
+  const track = $("track");
+  while (cells.length - currentIndex < BUFFER_AHEAD && queue.length > 0) {
+    const pair = queue.shift();
+    const el = makeCell(pair);
+    track.appendChild(el);
+    cells.push(el);
+  }
+}
+
+function markCurrent() {
+  cells.forEach((c, i) => {
+    if (i < currentIndex) return;
+    c.className = i === currentIndex ? "cell current" : "cell upcoming";
+  });
+}
+
+function markerLeftPx() {
+  return $("ticker").clientWidth * MARKER_FRAC;
+}
+function offsetForCurrent() {
+  const cw = currentCellW();
+  return markerLeftPx() - (currentIndex * cw + cw / 2);
+}
+
+function resetTicker() {
+  $("track").innerHTML = "";
+  cells = [];
+  currentIndex = 0;
+  finished = false;
+  $("typer").value = "";
+  stats = { correct: 0, wrong: 0 };
+  resetTimer();
+  queue = shuffle(pool.map(p => [...p]));
+  $("doneMsg").classList.add("hidden");
+  refillAhead();
+  markCurrent();
+  // Stats must be updated *after* queue + refill so "Remaining" reflects
+  // the actual starting pool size (e.g. 46 for basic hiragana).
+  updateStats();
+  trackOffset = offsetForCurrent();
+  $("track").style.transform = `translateX(${trackOffset}px)`;
+}
+
+function formatElapsed(ms) {
+  const totalSec = Math.floor(ms / 1000);
+  const m = Math.floor(totalSec / 60);
+  const s = totalSec % 60;
+  return m + ":" + String(s).padStart(2, "0");
+}
+function renderTimer() {
+  const ms = timerStart ? (Date.now() - timerStart) : 0;
+  $("timerVal").textContent = formatElapsed(ms);
+}
+function startTimer() {
+  if (timerInterval) return;     // already running
+  if (finished) return;
+  timerStart = Date.now();
+  $("timer").classList.remove("done");
+  $("timer").classList.add("running");
+  renderTimer();
+  timerInterval = setInterval(renderTimer, 250);
+}
+function stopTimer(markDone) {
+  if (timerInterval) {
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
+  renderTimer();
+  $("timer").classList.remove("running");
+  if (markDone) $("timer").classList.add("done");
+}
+function resetTimer() {
+  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+  timerStart = 0;
+  $("timer").classList.remove("running", "done");
+  $("timerVal").textContent = "0:00";
+}
+
+// ----- timer log -----
+function shortSelectionLabel() {
+  // Compact label for the Set column. Examples:
+  //  "Basic katakana", "Basic hiragana", "All kana", "Mixed (3K+2H)", "3 katakana"
+  let kCount = 0, hCount = 0;
+  for (const k of selected) {
+    if (!SETS[k]) continue;
+    if (SETS[k].group === "Katakana") kCount++;
+    else if (SETS[k].group === "Hiragana") hCount++;
+  }
+  const basicK = new Set(BASIC), basicH = new Set(BASIC_HIRA);
+  const sel = [...selected];
+  const isBasicK = sel.length === basicK.size && sel.every(k => basicK.has(k));
+  const isBasicH = sel.length === basicH.size && sel.every(k => basicH.has(k));
+  const isAll    = sel.length === Object.keys(SETS).length;
+  if (isAll)    return "All kana";
+  if (isBasicK) return "Basic katakana";
+  if (isBasicH) return "Basic hiragana";
+  if (kCount && hCount) return `Mixed (${kCount}K+${hCount}H)`;
+  if (kCount) return kCount + " katakana group" + (kCount === 1 ? "" : "s");
+  if (hCount) return hCount + " hiragana group" + (hCount === 1 ? "" : "s");
+  return "—";
+}
+
+function renderLog() {
+  const body = $("logBody");
+  if (logEntries.length === 0) {
+    body.innerHTML = '<tr class="log-empty"><td colspan="5">no completed runs yet</td></tr>';
+    return;
+  }
+  // Build a scored copy, then sort best → worst.
+  const scored = logEntries.map((e, origIdx) => {
+    const ms     = entryMs(e);
+    const accPct = entryAccPct(e);
+    const score  = computeScore(ms, accPct, e.chars);
+    return { e, origIdx, ms, accPct, score, tier: scoreTier(score) };
+  }).sort((a, b) => b.score - a.score);
+
+  const rows = scored.map((s, rank) => {
+    const e = s.e;
+    const safeLabel = e.label.replace(/"/g, "&quot;");
+    const title = `${safeLabel} · ${e.chars} chars · score ${s.score.toFixed(1)} · ${s.tier.flavor}`;
+    return `<tr>
+      <td class="num">${rank + 1}</td>
+      <td class="rating ${s.tier.cls}" title="${s.tier.flavor} (${s.score.toFixed(1)})">${s.tier.grade}</td>
+      <td class="set" title="${title}">${e.label}</td>
+      <td class="time">${e.time}</td>
+      <td class="acc">${e.acc}</td>
+    </tr>`;
+  }).join("");
+  body.innerHTML = rows;
+}
+
+// ----- rating: "some arbitrary-ass math" -----
+// Combines time-per-character (speed) with accuracy-squared (precision).
+// Higher = better. Roughly 0–200 typical range; we tier into letter grades.
+function computeScore(ms, accPct, chars) {
+  if (!chars || !ms) return 0;
+  const secPerChar = (ms / 1000) / chars;
+  if (secPerChar <= 0) return 0;
+  // 1.5 s/char = neutral 1.0; faster pushes the factor up, capped at 2.0
+  // so blazing through 5 chars in a second doesn't completely dominate.
+  const speedFactor = Math.min(2, Math.max(0, 1.5 / secPerChar));
+  // Accuracy weighted squared — 100% → 1.0, 90% → 0.81, 75% → 0.56, 50% → 0.25
+  const accFactor = Math.pow(Math.max(0, accPct) / 100, 2);
+  return speedFactor * accFactor * 100;
+}
+
+// Tier a numeric score into a letter grade + a color class
+function scoreTier(score) {
+  if (score >= 150) return { grade: "S+", cls: "tier-splus", flavor: "untouchable" };
+  if (score >= 120) return { grade: "S",  cls: "tier-s",     flavor: "flawless"   };
+  if (score >= 95)  return { grade: "A",  cls: "tier-a",     flavor: "great"      };
+  if (score >= 70)  return { grade: "B",  cls: "tier-b",     flavor: "solid"      };
+  if (score >= 45)  return { grade: "C",  cls: "tier-c",     flavor: "passing"    };
+  if (score >= 25)  return { grade: "D",  cls: "tier-d",     flavor: "rough"      };
+  return                   { grade: "F",  cls: "tier-f",     flavor: "ouch"       };
+}
+
+// Pull raw numbers off an entry — preferring stored numeric fields,
+// falling back to parsing the formatted strings for legacy entries.
+function entryMs(e) {
+  if (typeof e.ms === "number") return e.ms;
+  // parse "M:SS"
+  const m = /^(\d+):(\d+)/.exec(e.time || "");
+  if (!m) return 0;
+  return (parseInt(m[1],10) * 60 + parseInt(m[2],10)) * 1000;
+}
+function entryAccPct(e) {
+  if (typeof e.accPct === "number") return e.accPct;
+  const m = /^(\d+)/.exec(e.acc || "");
+  return m ? parseInt(m[1],10) : 0;
+}
+
+function logRun() {
+  const ms = timerStart ? (Date.now() - timerStart) : 0;
+  const tot = stats.correct + stats.wrong;
+  const accPct = tot ? Math.round(stats.correct / tot * 100) : 0;
+  const acc = tot ? accPct + "%" : "—";
+  logEntries.push({
+    label:  shortSelectionLabel(),
+    chars:  pool.length,
+    time:   formatElapsed(ms),
+    ms:     ms,         // raw — for exact rating math later
+    acc:    acc,
+    accPct: accPct,     // raw — for exact rating math later
+  });
+  saveLog();    // persist after every completed run
+  renderLog();
+}
+
+function updateStats() {
+  $("stCorrect").textContent = stats.correct;
+  $("stWrong").textContent = stats.wrong;
+  const tot = stats.correct + stats.wrong;
+  $("stAcc").textContent = tot ? Math.round(stats.correct/tot*100) + "%" : "—";
+  const remain = queue.length + Math.max(0, cells.length - currentIndex);
+  $("stRemain").textContent = finished ? "0" : remain;
+}
+
+// ---------- input handling ----------
+function evaluateInput() {
+  if (finished) return;
+  if (!cells[currentIndex]) return;
+  const input = $("typer");
+  const cleaned = input.value.toLowerCase().replace(/[^a-z]/g, "");
+  if (cleaned !== input.value) input.value = cleaned;
+  // start timer on first real keystroke
+  if (input.value.length > 0 && !timerStart) startTimer();
+  const target = cells[currentIndex]._pair[1];
+  const buf = input.value;
+  if (buf === target) {
+    const el = cells[currentIndex];
+    el.className = "cell correct";
+    el.querySelector(".hint").textContent = target;
+    stats.correct++;
+    input.value = "";
+    advance();
+  } else if (buf.length >= target.length) {
+    const el = cells[currentIndex];
+    el.className = "cell wrong";
+    el.querySelector(".hint").textContent = target;
+    stats.wrong++;
+    queue.push([...el._pair]);
+    input.value = "";
+    advance();
+  }
+}
+
+function advance() {
+  currentIndex++;
+  refillAhead();
+  if (queue.length === 0 && currentIndex >= cells.length) {
+    finished = true;
+    stopTimer(true);
+    if (timerStart) logRun();
+    $("doneMsg").classList.remove("hidden");
+    updateStats();
+    return;
+  }
+  markCurrent();
+  updateStats();
+  trackOffset = offsetForCurrent();
+  $("track").style.transform = `translateX(${trackOffset}px)`;
+}
+
+$("typer").addEventListener("input", evaluateInput);
+
+// Whole "All done!" overlay acts as a restart button
+$("doneMsg").addEventListener("click", () => { resetTicker(); });
+$("doneMsg").addEventListener("keydown", (e) => {
+  if (e.key === "Enter" || e.key === " ") {
+    e.preventDefault();
+    resetTicker();
+  }
+});
+
+window.addEventListener("resize", () => {
+  trackOffset = offsetForCurrent();
+  $("track").style.transform = `translateX(${trackOffset}px)`;
+});
+
+// ---------- modal ----------
+function renderSets() {
+  const container = $("setList");
+  container.innerHTML = "";
+  const groups = {};
+  for (const [key, def] of Object.entries(SETS)) {
+    (groups[def.group] = groups[def.group] || []).push([key, def]);
+  }
+  for (const [groupName, entries] of Object.entries(groups)) {
+    const header = document.createElement("div");
+    header.className = "set-group-header";
+    header.textContent = groupName;
+    container.appendChild(header);
+
+    const grid = document.createElement("div");
+    grid.className = "sets";
+    for (const [key, def] of entries) {
+      const lbl = document.createElement("label");
+      lbl.className = "set-btn" + (selected.has(key) ? " active" : "");
+      lbl.innerHTML = `<input type="checkbox" ${selected.has(key)?"checked":""}> <span>${def.label}</span>`;
+      const input = lbl.querySelector("input");
+      input.addEventListener("change", () => {
+        if (input.checked) selected.add(key); else selected.delete(key);
+        lbl.classList.toggle("active", input.checked);
+      });
+      grid.appendChild(lbl);
+    }
+    container.appendChild(grid);
+  }
+}
+$("openSets").onclick = () => { renderSets(); $("modal").classList.add("open"); };
+$("cancelSets").onclick = () => $("modal").classList.remove("open");
+$("modalX").onclick = () => $("modal").classList.remove("open");
+$("applySets").onclick = () => {
+  if (selected.size === 0) { alert("Pick at least one group."); return; }
+  buildPool();
+  resetTicker();
+  $("modal").classList.remove("open");
+};
+$("selAll").onclick   = () => { selected = new Set(Object.keys(SETS)); renderSets(); };
+$("selBasic").onclick = () => { selected = new Set(BASIC); renderSets(); };
+$("selHira").onclick  = () => { selected = new Set(BASIC_HIRA); renderSets(); };
+$("selNone").onclick  = () => { selected = new Set(); renderSets(); };
+$("restart").onclick = () => { resetTicker(); };
+
+// timer log — clear
+$("clearLog").onclick = (e) => {
+  e.preventDefault();
+  logEntries = [];
+  clearStoredLog();   // wipe persisted copy too
+  renderLog();
+};
+
+// ---------- init ----------
+loadLog();      // hydrate timer log from localStorage if available
+renderLog();    // paint the loaded entries (or the empty-state placeholder)
+buildPool();
+resetTicker();
+</script>
+</body>
+</html>

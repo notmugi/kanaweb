@@ -1,0 +1,1339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kana Flashcards</title>
+<style>
+  /* ===========================================================
+     Kana Flashcards — styled to match Quiz.html (XP / SharePoint
+     webpart aesthetic, mid-2000s school portal).
+     =========================================================== */
+
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    font-family: Verdana, Tahoma, "MS Sans Serif", Geneva, sans-serif;
+    font-size: 11px;
+    color: #1a1a1a;
+    background: #ece9d8 url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='8' height='8'><rect width='8' height='8' fill='%23ece9d8'/><path d='M-2,2 l4,-4 M0,8 l8,-8 M6,10 l4,-4' stroke='%23d4ccb4' stroke-width='1'/></svg>");
+  }
+  a { color: #4a7ac8; text-decoration: underline; cursor: pointer; }
+  a:visited { color: #6a4a9c; }
+  a:hover { color: #c84a14; }
+
+  .quiz-root { padding: 8px; max-width: 980px; margin: 0 auto; }
+
+  /* ===== Webparts ===== */
+  .webpart {
+    background: #fff;
+    border: 1px solid #a8a8a8;
+    margin-bottom: 10px;
+    box-shadow: 2px 2px 0 #c4b896;
+  }
+  .webpart-header {
+    background: linear-gradient(to bottom, #8ab4e8 0%, #4a7ac8 100%);
+    border-bottom: 1px solid #2a5a9a;
+    color: #fff;
+    font-weight: bold;
+    font-size: 11px;
+    padding: 4px 8px;
+    min-height: 24px;
+    line-height: 16px;
+    text-shadow: 1px 1px 0 rgba(0,0,0,0.3);
+    display: flex; align-items: center;
+    user-select: none;
+  }
+  .webpart-header > span:first-child { flex: 1; text-align: left; }
+  .webpart-header > span:first-child::before {
+    content: "▼";
+    display: inline-block;
+    width: 12px;
+    font-size: 9px;
+    margin-right: 4px;
+    color: #fff;
+    text-shadow: 1px 1px 0 rgba(0,0,0,0.3);
+  }
+  .webpart-header .actions { font-size: 10px; font-weight: normal; color: #e8eef7; }
+  .webpart-body { padding: 8px; }
+
+  /* Color variants */
+  .wp-orange .webpart-header {
+    background: linear-gradient(to bottom, #ffd690 0%, #d48a00 100%);
+    border-bottom-color: #8a5a00;
+    text-shadow: 1px 1px 0 rgba(120,60,0,0.5);
+  }
+  .wp-green .webpart-header {
+    background: linear-gradient(to bottom, #c4e0a0 0%, #5a8a3a 100%);
+    border-bottom-color: #2a5a10;
+    text-shadow: 1px 1px 0 rgba(0,60,0,0.4);
+  }
+  .wp-red .webpart-header {
+    background: linear-gradient(to bottom, #f4a4a4 0%, #c84a4a 100%);
+    border-bottom-color: #8a2020;
+    text-shadow: 1px 1px 0 rgba(80,0,0,0.4);
+  }
+  /* Lighter "actions" subtitle on the red header — keep it readable
+     against the wine-red gradient with the same dark shadow. */
+  .wp-red .webpart-header .actions {
+    color: #ffe6e6;
+    text-shadow: 1px 1px 0 rgba(80,0,0,0.4);
+  }
+  .wp-gold .webpart-header {
+    background: linear-gradient(to bottom, #fff5d4 0%, #d8a830 100%);
+    border-bottom-color: #8a6a10;
+    color: #5a3a00;
+    text-shadow: 1px 1px 0 rgba(255,255,255,0.5);
+  }
+  /* On the light gold header, the right-side subtitle needs dark text
+     so it doesn't disappear into the cream gradient. */
+  .wp-gold .webpart-header .actions {
+    color: #6a4a10;
+    text-shadow: 1px 1px 0 rgba(255,255,255,0.5);
+  }
+
+  /* ===== Page head ===== */
+  .page-head {
+    background: #fff;
+    border: 1px solid #a8a8a8;
+    box-shadow: 2px 2px 0 #c4b896;
+    margin-bottom: 10px;
+  }
+  .page-head .header {
+    background: linear-gradient(to bottom, #fff5d4 0%, #f4d98a 100%);
+    border-bottom: 1px solid #c8a040;
+    padding: 6px 10px;
+    display: flex; gap: 10px; align-items: center;
+  }
+  .page-head .header .icon {
+    font-size: 28px; line-height: 1;
+    filter: drop-shadow(1px 1px 0 rgba(0,0,0,0.15));
+    flex-shrink: 0;
+  }
+  .page-head .header .title-block { flex: 1; min-width: 0; }
+  .page-head .header h1 {
+    margin: 0;
+    font-family: Georgia, "Trebuchet MS", serif;
+    font-style: italic;
+    font-size: 17px; font-weight: bold;
+    color: #5a3a00;
+    text-shadow: 1px 1px 0 rgba(255,255,255,0.6);
+  }
+  .page-head .header .sub {
+    font-size: 11px; color: #6a4a10;
+    font-style: italic; margin-top: 2px;
+  }
+
+  /* ===== Buttons (ph-btn) ===== */
+  .ph-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    gap: 4px;
+    height: 22px; line-height: 20px;
+    padding: 0 10px;
+    background: linear-gradient(to bottom, #fff 0%, #e0dcd4 100%);
+    border: 1px solid #a8a8a8;
+    color: #000;
+    font: 11px Verdana, Tahoma, sans-serif;
+    cursor: pointer;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .ph-btn:hover {
+    background: linear-gradient(to bottom, #ffce4a 0%, #c8a020 100%);
+    border-color: #8a7010;
+    color: #4a3a0a;
+  }
+  .ph-btn:active {
+    background: linear-gradient(to bottom, #d8d4cc 0%, #fff 100%);
+  }
+  .ph-btn.primary {
+    background: linear-gradient(to bottom, #ffce4a 0%, #c8a020 100%);
+    border-color: #8a7010;
+    color: #4a3a0a;
+    font-weight: bold;
+  }
+  .ph-btn.primary:hover {
+    background: linear-gradient(to bottom, #ffe080 0%, #d8b840 100%);
+  }
+  /* Grade button color variants */
+  .ph-btn.grade { height: 32px; padding: 0 12px; font-size: 12px; font-weight: bold; flex-direction: column; line-height: 1.1; gap: 0; }
+  .ph-btn.grade small { font-weight: normal; font-size: 10px; opacity: 0.8; }
+  .ph-btn.grade-again {
+    background: linear-gradient(to bottom, #f4a4a4 0%, #c84a4a 100%);
+    border-color: #8a2020;
+    color: #fff;
+    text-shadow: 1px 1px 0 rgba(0,0,0,0.3);
+  }
+  .ph-btn.grade-again:hover {
+    background: linear-gradient(to bottom, #ffb8b8 0%, #d85a5a 100%);
+  }
+  .ph-btn.grade-hard {
+    background: linear-gradient(to bottom, #ffd690 0%, #d48a00 100%);
+    border-color: #8a5a00;
+    color: #4a3a0a;
+    text-shadow: 1px 1px 0 rgba(255,255,255,0.4);
+  }
+  .ph-btn.grade-hard:hover {
+    background: linear-gradient(to bottom, #ffe6b0 0%, #e8a020 100%);
+  }
+  .ph-btn.grade-good {
+    background: linear-gradient(to bottom, #c4e0a0 0%, #5a8a3a 100%);
+    border-color: #2a5a10;
+    color: #fff;
+    text-shadow: 1px 1px 0 rgba(0,60,0,0.4);
+  }
+  .ph-btn.grade-good:hover {
+    background: linear-gradient(to bottom, #d8eebc 0%, #6ca04a 100%);
+  }
+  .ph-btn.grade-easy {
+    background: linear-gradient(to bottom, #8ab4e8 0%, #4a7ac8 100%);
+    border-color: #2a5a9a;
+    color: #fff;
+    text-shadow: 1px 1px 0 rgba(0,0,0,0.3);
+  }
+  .ph-btn.grade-easy:hover {
+    background: linear-gradient(to bottom, #a0c4f0 0%, #5a8ad8 100%);
+  }
+
+  /* ===== Set buttons (chip toggles) ===== */
+  .set-group-header {
+    font: italic bold 13px Georgia, "Trebuchet MS", serif;
+    color: #2a5a9a;
+    margin: 8px 0 4px;
+    padding-bottom: 3px;
+    border-bottom: 1px dotted #c8c8c8;
+  }
+  .set-group-header:first-child { margin-top: 0; }
+  .sets {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 4px;
+    margin-bottom: 6px;
+  }
+  .set-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: linear-gradient(to bottom, #fff 0%, #ece9d8 100%);
+    border: 1px solid #a8a8a8;
+    box-shadow: 1px 1px 0 #c4b896;
+    padding: 4px 8px;
+    cursor: pointer;
+    font: 11px Verdana, Tahoma, sans-serif;
+    color: #1a1a1a;
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .set-btn:hover {
+    background: linear-gradient(to bottom, #ffce4a 0%, #c8a020 100%);
+    border-color: #8a7010;
+    color: #4a3a0a;
+  }
+  .set-btn.active {
+    background: linear-gradient(to bottom, #fff5d4 0%, #f4d98a 100%);
+    border-color: #c8a040;
+    color: #5a3a00;
+    font-weight: bold;
+  }
+
+
+  /* ===== Card area ===== */
+  .card-stage {
+    background:
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='8' height='8'><rect width='8' height='8' fill='%23fbfaf3'/><path d='M0,8 l8,-8' stroke='%23f0ecd8' stroke-width='1'/></svg>"),
+      linear-gradient(to bottom, #fdfcf5 0%, #f4f0e0 100%);
+    border: 1px solid #c8c4b8;
+    box-shadow:
+      inset 1px 1px 0 rgba(255,255,255,0.6),
+      inset -1px -1px 0 rgba(0,0,0,0.05),
+      1px 1px 0 #c4b896;
+    padding: 18px 12px;
+    text-align: center;
+    min-height: 220px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+  }
+  .script-tag {
+    display: inline-block;
+    font-size: 14px;
+    font-weight: bold;
+    color: #4a3a0a;
+    background: linear-gradient(to bottom, #fff5d4 0%, #f4d98a 100%);
+    border: 1px solid #c8a040;
+    /* Dark navy drop shadow to match the slate chalkboard it sits on. */
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.5), 2px 2px 0 rgba(10,20,50,0.5);
+    padding: 5px 18px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    text-shadow: 1px 1px 0 rgba(255,255,255,0.5);
+  }
+  /* Floats the script tag over the top of the canvas — pinned absolutely
+     so it overlaps the chalkboard surface itself, not the grey frame. */
+  .script-tag-wrap {
+    position: absolute;
+    top: 14px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    pointer-events: none;   /* clicks pass through to the canvas */
+    z-index: 2;
+  }
+  .romaji {
+    font: italic bold 48px Georgia, "Trebuchet MS", serif;
+    color: #2a5a9a;
+    text-shadow: 1px 1px 0 rgba(255,255,255,0.6), 2px 2px 0 rgba(0,0,0,0.08);
+    line-height: 1.1;
+    margin: 4px 0;
+    letter-spacing: 0.02em;
+  }
+  .kana {
+    font-family: "Hiragino Sans", "Yu Gothic", "Noto Sans JP", "MS Mincho", serif;
+    font-size: 104px;
+    line-height: 1;
+    color: #2a5a9a;
+    /* Layered shadow: white highlight on top, dark drop below, faint
+       diffuse glow underneath — gives an embossed inky-stamp look. */
+    text-shadow:
+      1px 1px 0 rgba(255,255,255,0.85),
+      -1px -1px 0 rgba(255,255,255,0.4),
+       2px 2px 0 #c4b896,
+       3px 3px 0 rgba(0,0,0,0.10),
+       0 6px 12px rgba(42, 90, 154, 0.18);
+    min-height: 110px;
+    letter-spacing: 0.02em;
+  }
+  .empty {
+    color: #888;
+    font-style: italic;
+    font-size: 11px;
+    padding: 30px 10px;
+  }
+
+  .action-row {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 10px;
+  }
+  .action-row.grade-row { gap: 4px; margin-top: 6px; }
+  .action-row.grade-row .ph-btn.grade { min-width: 80px; }
+
+  /* ===== Drawing canvas ===== */
+  .chalkboard-frame {
+    position: relative;       /* anchor for the floating script tag */
+    border: 1px solid #2a5a9a;
+    background: #4a5764;
+    box-shadow: inset 0 0 0 1px #1a3a6b, 1px 1px 0 #c4b896;
+    padding: 6px;
+  }
+  #drawCanvas {
+    background:
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='64' height='64'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.11 0'/></filter><rect width='64' height='64' filter='url(%23n)'/></svg>"),
+      linear-gradient(to bottom, #5a6774 0%, #3a4754 100%);
+    cursor: crosshair;
+    touch-action: none;
+    display: block;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+  }
+
+  /* ===== Stats ===== */
+  .stat-row {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding: 3px 4px;
+    border-bottom: 1px dotted #c8c8c8;
+    font-size: 11px;
+  }
+  .stat-row:last-child { border-bottom: none; }
+  .stat-row .label { color: #555; }
+  .stat-row .val   { font-weight: bold; color: #4a7ac8; font-size: 13px; font-family: "Courier New", monospace; }
+  .stat-row.relearn .val { color: #c84a4a; }
+  .stat-row.new     .val { color: #4a7ac8; }
+  .stat-row.learn   .val { color: #d48a00; }
+  .stat-row.known   .val { color: #5a8a3a; }
+
+  /* ===== Layout grid ===== */
+  .sub-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    align-items: stretch;
+  }
+  .sub-row .webpart {
+    margin-bottom: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .sub-row .webpart > .webpart-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .about-body,
+  .stats-body {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    font-size: 11px;
+    line-height: 1.5;
+  }
+  .stats-actions {
+    margin-top: auto;
+    padding-top: 10px;
+    display: flex;
+    justify-content: flex-start;
+  }
+
+  /* Two equal-height panels inside a single webpart */
+  .study-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 10px;
+    align-items: stretch;
+  }
+  .study-pane {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+  .study-pane > .pane-title {
+    font: italic bold 12px Georgia, "Trebuchet MS", serif;
+    color: #2a5a9a;
+    padding-bottom: 4px;
+    margin-bottom: 6px;
+    border-bottom: 1px dotted #c8c8c8;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .study-pane > .pane-title .actions {
+    font-style: normal;
+    font-weight: normal;
+    font-size: 10px;
+    color: #777;
+  }
+  .study-pane .card-stage,
+  .study-pane .chalkboard-frame {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  @media (max-width: 720px) {
+    .study-grid { grid-template-columns: 1fr; }
+    .info-grid  { grid-template-columns: 1fr; }
+    .sub-row    { grid-template-columns: 1fr; }
+    .romaji { font-size: 36px; }
+    .kana   { font-size: 72px; min-height: 76px; }
+  }
+
+  /* ===== Tablet mode ===== */
+  body.tablet-mode {
+    font-size: 17px;
+    font-weight: bold;
+  }
+  body.tablet-mode .webpart-body,
+  body.tablet-mode .stat-row,
+  body.tablet-mode .about-body,
+  body.tablet-mode .footer-note,
+  body.tablet-mode .about-list,
+  body.tablet-mode .pane-title,
+  body.tablet-mode .study-footer,
+  body.tablet-mode .set-picker-footer {
+    font-size: 17px;
+    font-weight: bold;
+  }
+  body.tablet-mode .script-tag {
+    font-size: 21px;
+    padding: 8px 26px;
+  }
+  body.tablet-mode .romaji {
+    font-size: 72px;
+  }
+  body.tablet-mode .kana {
+    font-size: 156px;
+    min-height: 165px;
+  }
+  body.tablet-mode .stat-row .val {
+    font-size: 20px;
+  }
+  body.tablet-mode .ph-btn {
+    height: 33px;
+    line-height: 31px;
+    padding: 0 16px;
+    font-size: 17px;
+    font-weight: bold;
+  }
+  body.tablet-mode .ph-btn.grade {
+    height: 56px;
+    padding: 0 18px;
+    font-size: 18px;
+    line-height: 1.1;
+    justify-content: center;
+    align-items: center;
+    gap: 2px;
+  }
+  body.tablet-mode .ph-btn.grade small {
+    font-size: 15px;
+    line-height: 1;
+  }
+  body.tablet-mode .set-btn {
+    font-size: 17px;
+    font-weight: bold;
+    padding: 8px 12px;
+    white-space: nowrap;
+  }
+  body.tablet-mode .sets {
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  }
+  body.tablet-mode kbd {
+    font-size: 15px;
+    padding: 2px 8px;
+  }
+  body.tablet-mode .empty {
+    font-size: 17px;
+  }
+  body.tablet-mode .study-pane > .pane-title {
+    font-size: 18px;
+  }
+
+  /* ===== Utility ===== */
+  .hidden { display: none !important; }
+  .footer-note {
+    margin-top: 8px;
+    font-size: 10px;
+    color: #777;
+    text-align: center;
+    font-style: italic;
+  }
+  .footer-note a, .footer-note button {
+    color: #4a7ac8;
+    background: transparent;
+    border: none;
+    padding: 0;
+    font: inherit;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+  .footer-note button:hover { color: #c84a14; }
+
+  /* ===== Set picker ===== */
+  .set-btn input { accent-color: #4a7ac8; }
+  .set-picker-footer {
+    background: linear-gradient(to bottom, #f4f0e8 0%, #e0dcd4 100%);
+    border-top: 1px solid #b8b4a8;
+    padding: 6px 10px;
+    display: flex; gap: 6px; flex-wrap: wrap; align-items: center;
+  }
+  .set-picker-footer .spacer { flex: 1; }
+
+  .ph-btn.danger {
+    background: linear-gradient(to bottom, #f4a4a4 0%, #c84a4a 100%);
+    border-color: #8a2020;
+    color: #fff;
+    text-shadow: 1px 1px 0 rgba(0,0,0,0.3);
+  }
+  .ph-btn.danger:hover {
+    background: linear-gradient(to bottom, #ffb8b8 0%, #d85a5a 100%);
+    border-color: #6a1010;
+    color: #fff;
+  }
+  .ph-btn.danger:active {
+    background: linear-gradient(to bottom, #a83838 0%, #f4a4a4 100%);
+  }
+  .ph-btn .icon-trash {
+    width: 10px;
+    height: 11px;
+    display: inline-block;
+    vertical-align: -1px;
+    margin-right: 1px;
+  }
+
+  .study-footer {
+    background: linear-gradient(to bottom, #f4f0e8 0%, #e0dcd4 100%);
+    border-top: 1px solid #b8b4a8;
+    padding: 6px 10px;
+    margin-top: 10px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+    font-size: 11px;
+  }
+  .study-footer .meta { color: #555; font-size: 10px; }
+  .study-footer .meta b { color: #4a7ac8; }
+  .study-footer .spacer { flex: 1; }
+
+  /* About list */
+  .about-list { font-size: 11px; line-height: 1.5; padding-left: 16px; margin: 4px 0; }
+  .about-list li { margin-bottom: 2px; }
+  kbd {
+    display: inline-block;
+    padding: 1px 5px;
+    font: bold 10px "Courier New", monospace;
+    background: linear-gradient(to bottom, #fff 0%, #e0dcd4 100%);
+    border: 1px solid #a8a8a8;
+    box-shadow: 1px 1px 0 #c4b896;
+    color: #1a1a1a;
+  }
+</style>
+</head>
+<body>
+
+<div class="quiz-root">
+
+  <div class="webpart wp-blue">
+    <div class="webpart-header">
+      <span>Study</span>
+    </div>
+    <div class="webpart-body" style="padding-bottom: 0;">
+      <div class="study-grid">
+
+        <div class="study-pane">
+          <div class="pane-title">
+            <span>Flashcard</span>
+          </div>
+          <div class="card-stage" id="card">
+            <div class="romaji" id="romaji">—</div>
+            <div class="kana hidden" id="kana"></div>
+            <div class="empty" id="empty">Select kana groups above and press <b>Show answer</b>.</div>
+          </div>
+        </div>
+
+        <div class="study-pane">
+          <div class="pane-title">
+            <span>Practice Writing</span>
+          </div>
+          <div class="chalkboard-frame">
+            <div class="script-tag-wrap">
+              <div class="script-tag hidden" id="scriptTag"></div>
+            </div>
+            <canvas id="drawCanvas" width="480" height="480"></canvas>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="action-row" id="showRow">
+        <button class="ph-btn primary" id="showBtn">Show answer</button>
+      </div>
+      <div class="action-row grade-row hidden" id="answerBtns">
+        <button class="ph-btn grade grade-again" data-grade="again">Again<small id="i-again"></small></button>
+        <button class="ph-btn grade grade-hard"  data-grade="hard">Hard<small id="i-hard"></small></button>
+        <button class="ph-btn grade grade-good"  data-grade="good">Good<small id="i-good"></small></button>
+        <button class="ph-btn grade grade-easy"  data-grade="easy">Easy<small id="i-easy"></small></button>
+      </div>
+    </div>
+    <div class="study-footer">
+      <button class="ph-btn" id="openSets">⚙ Select Kana</button>
+      <button class="ph-btn" id="clearDrawBtn">Clear board</button>
+      <button class="ph-btn" id="tabletModeBtn">Tablet mode</button>
+      <div class="spacer"></div>
+      <div class="meta">
+        <b>Selected:</b> <span id="selectedSummary">—</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="webpart wp-orange hidden" id="modal" style="margin-bottom: 10px;">
+    <div class="webpart-header">
+      <span>Select Kana</span>
+      <a class="x" id="modalX" title="Close" style="color:#fff;text-decoration:none;cursor:pointer;padding:0 4px;font-weight:bold;">✕</a>
+    </div>
+    <div class="webpart-body">
+      <div id="setList"></div>
+    </div>
+    <div class="set-picker-footer">
+      <button class="ph-btn" id="selAll">Select all</button>
+      <button class="ph-btn" id="selBasicHira">Basic hiragana</button>
+      <button class="ph-btn" id="selBasicKata">Basic katakana</button>
+      <button class="ph-btn" id="selNone">Clear</button>
+      <span class="spacer"></span>
+      <button class="ph-btn" id="cancelSets">Cancel</button>
+      <button class="ph-btn primary" id="applySets">Apply</button>
+    </div>
+  </div>
+
+  <div class="sub-row">
+
+    <div class="webpart wp-gold">
+      <div class="webpart-header"><span>Deck Stats</span><span class="actions">live count</span></div>
+      <div class="webpart-body">
+        <div class="stats-body">
+          <div class="stat-row relearn">
+            <span class="label">Relearn (due now)</span>
+            <span class="val" id="s-due">0</span>
+          </div>
+          <div class="stat-row new">
+            <span class="label">New (never seen)</span>
+            <span class="val" id="s-new">0</span>
+          </div>
+          <div class="stat-row learn">
+            <span class="label">Learning</span>
+            <span class="val" id="s-learn">0</span>
+          </div>
+          <div class="stat-row known">
+            <span class="label">Known (≥ 7 days)</span>
+            <span class="val" id="s-known">0</span>
+          </div>
+          <div class="stats-actions">
+            <button class="ph-btn danger" id="resetBtn" title="Wipe all flashcard progress">
+              <svg class="icon-trash" viewBox="0 0 10 11" aria-hidden="true">
+                <rect x="0" y="2" width="10" height="1.2" fill="currentColor"/>
+                <rect x="3.5" y="0.5" width="3" height="1.2" fill="none" stroke="currentColor" stroke-width="0.8"/>
+                <path d="M1.2,3.5 L1.7,10.5 L8.3,10.5 L8.8,3.5 Z"
+                      fill="none" stroke="currentColor" stroke-width="0.8" stroke-linejoin="miter"/>
+                <line x1="3.7" y1="4.8" x2="3.7" y2="9.2" stroke="currentColor" stroke-width="0.7"/>
+                <line x1="5.0" y1="4.8" x2="5.0" y2="9.2" stroke="currentColor" stroke-width="0.7"/>
+                <line x1="6.3" y1="4.8" x2="6.3" y2="9.2" stroke="currentColor" stroke-width="0.7"/>
+              </svg>
+              Reset progress
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="webpart wp-red">
+      <div class="webpart-header"><span>About</span><span class="actions">SM-2 spaced repetition</span></div>
+      <div class="webpart-body">
+        <div class="about-body">
+          Anki-style spaced repetition using the classic SM-2 algorithm
+          (ease factor 2.5 → 1.3, learning steps 1m / 10m, graduating to 1 day).
+          Read the romaji prompt, sketch the kana in the practice box,
+          then reveal and grade yourself honestly.
+          <ul class="about-list">
+            <li><kbd>Space</kbd> — show answer</li>
+            <li><kbd>1</kbd>/<kbd>2</kbd>/<kbd>3</kbd>/<kbd>4</kbd> — Again / Hard / Good / Easy</li>
+            <li><kbd>Ctrl+Z</kbd> — undo last chalk stroke</li>
+          </ul>
+          <div class="footer-note">
+            progress stored in localStorage
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+
+
+<script>
+const KANA_GROUPS = {
+  hira: {
+    "あ row":      [["あ","a"],["い","i"],["う","u"],["え","e"],["お","o"]],
+    "か row":      [["か","ka"],["き","ki"],["く","ku"],["け","ke"],["こ","ko"]],
+    "さ row":      [["さ","sa"],["し","shi"],["す","su"],["せ","se"],["そ","so"]],
+    "た row":      [["た","ta"],["ち","chi"],["つ","tsu"],["て","te"],["と","to"]],
+    "な row":      [["な","na"],["に","ni"],["ぬ","nu"],["ね","ne"],["の","no"]],
+    "は row":      [["は","ha"],["ひ","hi"],["ふ","fu"],["へ","he"],["ほ","ho"]],
+    "ま row":      [["ま","ma"],["み","mi"],["む","mu"],["め","me"],["も","mo"]],
+    "や row":      [["や","ya"],["ゆ","yu"],["よ","yo"]],
+    "ら row":      [["ら","ra"],["り","ri"],["る","ru"],["れ","re"],["ろ","ro"]],
+    "わ row":      [["わ","wa"],["を","wo"],["ん","n"]],
+    "Dakuten":     [["が","ga"],["ぎ","gi"],["ぐ","gu"],["げ","ge"],["ご","go"],
+                    ["ざ","za"],["じ","ji"],["ず","zu"],["ぜ","ze"],["ぞ","zo"],
+                    ["だ","da"],["で","de"],["ど","do"],
+                    ["ば","ba"],["び","bi"],["ぶ","bu"],["べ","be"],["ぼ","bo"]],
+    "Handakuten":  [["ぱ","pa"],["ぴ","pi"],["ぷ","pu"],["ぺ","pe"],["ぽ","po"]],
+  },
+  kata: {
+    "ア row":      [["ア","a"],["イ","i"],["ウ","u"],["エ","e"],["オ","o"]],
+    "カ row":      [["カ","ka"],["キ","ki"],["ク","ku"],["ケ","ke"],["コ","ko"]],
+    "サ row":      [["サ","sa"],["シ","shi"],["ス","su"],["セ","se"],["ソ","so"]],
+    "タ row":      [["タ","ta"],["チ","chi"],["ツ","tsu"],["テ","te"],["ト","to"]],
+    "ナ row":      [["ナ","na"],["ニ","ni"],["ヌ","nu"],["ネ","ne"],["ノ","no"]],
+    "ハ row":      [["ハ","ha"],["ヒ","hi"],["フ","fu"],["ヘ","he"],["ホ","ho"]],
+    "マ row":      [["マ","ma"],["ミ","mi"],["ム","mu"],["メ","me"],["モ","mo"]],
+    "ヤ row":      [["ヤ","ya"],["ユ","yu"],["ヨ","yo"]],
+    "ラ row":      [["ラ","ra"],["リ","ri"],["ル","ru"],["レ","re"],["ロ","ro"]],
+    "ワ row":      [["ワ","wa"],["ヲ","wo"],["ン","n"]],
+    "Dakuten":     [["ガ","ga"],["ギ","gi"],["グ","gu"],["ゲ","ge"],["ゴ","go"],
+                    ["ザ","za"],["ジ","ji"],["ズ","zu"],["ゼ","ze"],["ゾ","zo"],
+                    ["ダ","da"],["デ","de"],["ド","do"],
+                    ["バ","ba"],["ビ","bi"],["ブ","bu"],["ベ","be"],["ボ","bo"]],
+    "Handakuten":  [["パ","pa"],["ピ","pi"],["プ","pu"],["ペ","pe"],["ポ","po"]],
+  }
+};
+
+const STORAGE_KEY = "kana-flashcards-v1";
+const SELECTION_KEY = "kana-flashcards-selection-v1";
+
+let cards = {};
+let selectedGroups = {};
+let currentKey = null;
+let revealed = false;
+
+/* SM-2 scheduler constants (adapted from anki/rslib/src/scheduler/states/review.rs) */
+const INITIAL_EASE = 2.5;
+const MIN_EASE = 1.3;
+const EASE_AGAIN = -0.20;
+const EASE_HARD  = -0.15;
+const EASE_EASY  = +0.15;
+const HARD_MULT  = 1.2;
+const EASY_BONUS = 1.3;
+const LAPSE_MULT = 0.5;
+const MIN_LAPSE_INTERVAL = 1;
+const LEARNING_STEPS_MIN = [1, 10];
+const GRADUATING_INTERVAL = 1;
+const EASY_GRADUATING_INTERVAL = 4;
+
+const MS_PER_DAY = 86400000;
+const MS_PER_MIN = 60000;
+
+function newCard() {
+  return {
+    reps: 0, lapses: 0,
+    ease: INITIAL_EASE,
+    intervalDays: 0,
+    due: Date.now(),
+    phase: "new",
+    learnStep: 0,
+  };
+}
+
+function previewGrades(c) {
+  const now = Date.now();
+  const out = {};
+
+  if (c.phase === "new" || c.phase === "learning") {
+    out.again = { dueAt: now + LEARNING_STEPS_MIN[0] * MS_PER_MIN, label: fmtShort(LEARNING_STEPS_MIN[0] * MS_PER_MIN) };
+    const hardStep = LEARNING_STEPS_MIN[Math.max(0, c.phase === "new" ? 0 : c.learnStep)];
+    out.hard = { dueAt: now + hardStep * MS_PER_MIN, label: fmtShort(hardStep * MS_PER_MIN) };
+    const nextIdx = (c.phase === "new" ? 0 : c.learnStep) + 1;
+    if (nextIdx >= LEARNING_STEPS_MIN.length) {
+      out.good = { dueAt: now + GRADUATING_INTERVAL * MS_PER_DAY, label: fmtShort(GRADUATING_INTERVAL * MS_PER_DAY) };
+    } else {
+      out.good = { dueAt: now + LEARNING_STEPS_MIN[nextIdx] * MS_PER_MIN, label: fmtShort(LEARNING_STEPS_MIN[nextIdx] * MS_PER_MIN) };
+    }
+    out.easy = { dueAt: now + EASY_GRADUATING_INTERVAL * MS_PER_DAY, label: fmtShort(EASY_GRADUATING_INTERVAL * MS_PER_DAY) };
+    return out;
+  }
+
+  const cur = Math.max(1, c.intervalDays);
+  const hardI = Math.max(cur + 1, Math.round(cur * HARD_MULT));
+  const goodI = Math.max(hardI + 1, Math.round(cur * c.ease));
+  const easyI = Math.max(goodI + 1, Math.round(cur * c.ease * EASY_BONUS));
+  out.again = { dueAt: now + LEARNING_STEPS_MIN[0] * MS_PER_MIN, label: fmtShort(LEARNING_STEPS_MIN[0] * MS_PER_MIN) };
+  out.hard  = { dueAt: now + hardI * MS_PER_DAY, label: fmtShort(hardI * MS_PER_DAY) };
+  out.good  = { dueAt: now + goodI * MS_PER_DAY, label: fmtShort(goodI * MS_PER_DAY) };
+  out.easy  = { dueAt: now + easyI * MS_PER_DAY, label: fmtShort(easyI * MS_PER_DAY) };
+  return out;
+}
+
+function applyGrade(c, grade) {
+  const now = Date.now();
+  c.reps += 1;
+
+  if (c.phase === "new" || c.phase === "learning") {
+    if (grade === "again") {
+      c.phase = "learning";
+      c.learnStep = 0;
+      c.due = now + LEARNING_STEPS_MIN[0] * MS_PER_MIN;
+    } else if (grade === "hard") {
+      if (c.phase === "new") c.learnStep = 0;
+      c.phase = "learning";
+      c.due = now + LEARNING_STEPS_MIN[c.learnStep] * MS_PER_MIN;
+    } else if (grade === "good") {
+      const nextIdx = (c.phase === "new" ? 0 : c.learnStep) + 1;
+      if (nextIdx >= LEARNING_STEPS_MIN.length) {
+        c.phase = "review";
+        c.intervalDays = GRADUATING_INTERVAL;
+        c.due = now + GRADUATING_INTERVAL * MS_PER_DAY;
+      } else {
+        c.phase = "learning";
+        c.learnStep = nextIdx;
+        c.due = now + LEARNING_STEPS_MIN[nextIdx] * MS_PER_MIN;
+      }
+    } else if (grade === "easy") {
+      c.phase = "review";
+      c.intervalDays = EASY_GRADUATING_INTERVAL;
+      c.due = now + EASY_GRADUATING_INTERVAL * MS_PER_DAY;
+    }
+    return;
+  }
+
+  const cur = Math.max(1, c.intervalDays);
+  if (grade === "again") {
+    c.lapses += 1;
+    c.ease = Math.max(MIN_EASE, c.ease + EASE_AGAIN);
+    c.intervalDays = Math.max(MIN_LAPSE_INTERVAL, Math.round(cur * LAPSE_MULT));
+    c.phase = "learning";
+    c.learnStep = 0;
+    c.due = now + LEARNING_STEPS_MIN[0] * MS_PER_MIN;
+  } else if (grade === "hard") {
+    c.ease = Math.max(MIN_EASE, c.ease + EASE_HARD);
+    c.intervalDays = Math.max(cur + 1, Math.round(cur * HARD_MULT));
+    c.due = now + c.intervalDays * MS_PER_DAY;
+  } else if (grade === "good") {
+    const hardI = Math.max(cur + 1, Math.round(cur * HARD_MULT));
+    c.intervalDays = Math.max(hardI + 1, Math.round(cur * c.ease));
+    c.due = now + c.intervalDays * MS_PER_DAY;
+  } else if (grade === "easy") {
+    c.ease = c.ease + EASE_EASY;
+    const hardI = Math.max(cur + 1, Math.round(cur * HARD_MULT));
+    const goodI = Math.max(hardI + 1, Math.round(cur * c.ease));
+    c.intervalDays = Math.max(goodI + 1, Math.round(cur * c.ease * EASY_BONUS));
+    c.due = now + c.intervalDays * MS_PER_DAY;
+  }
+}
+
+function fmtShort(ms) {
+  if (ms < 60 * MS_PER_MIN) return Math.max(1, Math.round(ms / MS_PER_MIN)) + "m";
+  if (ms < MS_PER_DAY)      return Math.round(ms / (60 * MS_PER_MIN)) + "h";
+  const d = Math.round(ms / MS_PER_DAY);
+  if (d < 30) return d + "d";
+  if (d < 365) return Math.round(d / 30) + "mo";
+  return (d / 365).toFixed(1) + "y";
+}
+
+function keyFor(script, kana) { return script + ":" + kana; }
+
+function activeCardKeys() {
+  const keys = [];
+  for (const [script, groups] of Object.entries(KANA_GROUPS)) {
+    for (const [groupName, list] of Object.entries(groups)) {
+      const selKey = script + ":" + groupName;
+      if (!selectedGroups[selKey]) continue;
+      for (const [kana] of list) keys.push(keyFor(script, kana));
+    }
+  }
+  return keys;
+}
+
+function romajiFor(key) {
+  const [script, kana] = key.split(":");
+  for (const list of Object.values(KANA_GROUPS[script])) {
+    for (const [k, r] of list) if (k === kana) return r;
+  }
+  return "?";
+}
+
+function ensureCardsExist() {
+  for (const k of activeCardKeys()) if (!cards[k]) cards[k] = newCard();
+}
+
+function pickNextCard() {
+  const keys = activeCardKeys();
+  if (!keys.length) return null;
+  const now = Date.now();
+
+  const dueLearning = [];
+  const dueReview = [];
+  const newOnes = [];
+  for (const k of keys) {
+    const c = cards[k];
+    if (c.phase === "new") newOnes.push(k);
+    else if (c.due <= now) {
+      if (c.phase === "learning") dueLearning.push(k);
+      else dueReview.push(k);
+    }
+  }
+  let pool;
+  if (dueLearning.length) pool = dueLearning;
+  else if (dueReview.length) pool = dueReview;
+  else if (newOnes.length) pool = newOnes;
+  else {
+    const sorted = keys.slice().sort((a, b) => cards[a].due - cards[b].due);
+    return sorted[0];
+  }
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+function updateStats() {
+  const keys = activeCardKeys();
+  const now = Date.now();
+  let due = 0, nw = 0, learning = 0, known = 0;
+  for (const k of keys) {
+    const c = cards[k];
+    if (c.phase === "new") nw++;
+    else if (c.phase === "learning") { learning++; if (c.due <= now) due++; }
+    else { if (c.due <= now) due++; if (c.intervalDays >= 7) known++; }
+  }
+  document.getElementById("s-due").textContent = due;
+  document.getElementById("s-new").textContent = nw;
+  document.getElementById("s-learn").textContent = learning;
+  document.getElementById("s-known").textContent = known;
+}
+
+let stagedGroups = {};
+
+function updateSelectedSummary() {
+  let hiraCount = 0, kataCount = 0, charCount = 0;
+  const seen = new Set();
+  for (const [script, groups] of Object.entries(KANA_GROUPS)) {
+    for (const [groupName, list] of Object.entries(groups)) {
+      const selKey = script + ":" + groupName;
+      if (!selectedGroups[selKey]) continue;
+      if (script === "hira") hiraCount++; else kataCount++;
+      for (const [kana] of list) {
+        const k = script + ":" + kana;
+        if (!seen.has(k)) { seen.add(k); charCount++; }
+      }
+    }
+  }
+  const parts = [];
+  if (hiraCount) parts.push(hiraCount + " hiragana group" + (hiraCount === 1 ? "" : "s"));
+  if (kataCount) parts.push(kataCount + " katakana group" + (kataCount === 1 ? "" : "s"));
+  const el = document.getElementById("selectedSummary");
+  el.textContent = parts.length ? parts.join(", ") + " — " + charCount + " chars" : "(none)";
+}
+
+function renderSetList() {
+  const container = document.getElementById("setList");
+  container.innerHTML = "";
+  const labels = { hira: "Hiragana", kata: "Katakana" };
+  for (const script of ["hira", "kata"]) {
+    const header = document.createElement("div");
+    header.className = "set-group-header";
+    header.textContent = labels[script];
+    container.appendChild(header);
+
+    const grid = document.createElement("div");
+    grid.className = "sets";
+    for (const groupName of Object.keys(KANA_GROUPS[script])) {
+      const selKey = script + ":" + groupName;
+      const lbl = document.createElement("label");
+      lbl.className = "set-btn" + (stagedGroups[selKey] ? " active" : "");
+      lbl.innerHTML = `<input type="checkbox" ${stagedGroups[selKey] ? "checked" : ""}> <span>${groupName}</span>`;
+      const input = lbl.querySelector("input");
+      input.addEventListener("change", () => {
+        if (input.checked) stagedGroups[selKey] = true;
+        else delete stagedGroups[selKey];
+        lbl.classList.toggle("active", input.checked);
+      });
+      grid.appendChild(lbl);
+    }
+    container.appendChild(grid);
+  }
+}
+
+function openSetModal() {
+  stagedGroups = { ...selectedGroups };
+  renderSetList();
+  const el = document.getElementById("modal");
+  el.classList.remove("hidden");
+  el.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+function closeSetModal() {
+  document.getElementById("modal").classList.add("hidden");
+}
+function applySetModal() {
+  if (Object.keys(stagedGroups).length === 0) {
+    alert("Pick at least one group.");
+    return;
+  }
+  selectedGroups = { ...stagedGroups };
+  saveSelection();
+  ensureCardsExist();
+  showNext();
+  updateStats();
+  updateSelectedSummary();
+  closeSetModal();
+}
+
+const BASIC_HIRA_GROUPS = ["あ row","か row","さ row","た row","な row","は row","ま row","や row","ら row","わ row"];
+const BASIC_KATA_GROUPS = ["ア row","カ row","サ row","タ row","ナ row","ハ row","マ row","ヤ row","ラ row","ワ row"];
+
+function stageAll() {
+  stagedGroups = {};
+  for (const [script, groups] of Object.entries(KANA_GROUPS))
+    for (const g of Object.keys(groups))
+      stagedGroups[script + ":" + g] = true;
+  renderSetList();
+}
+function stageBasicHira() {
+  stagedGroups = {};
+  for (const g of BASIC_HIRA_GROUPS) stagedGroups["hira:" + g] = true;
+  renderSetList();
+}
+function stageBasicKata() {
+  stagedGroups = {};
+  for (const g of BASIC_KATA_GROUPS) stagedGroups["kata:" + g] = true;
+  renderSetList();
+}
+function stageNone() {
+  stagedGroups = {};
+  renderSetList();
+}
+
+function showNext() {
+  ensureCardsExist();
+  currentKey = pickNextCard();
+  revealed = false;
+  if (typeof resetCanvas === "function") resetCanvas();
+
+  const kanaEl = document.getElementById("kana");
+  const romajiEl = document.getElementById("romaji");
+  const emptyEl = document.getElementById("empty");
+  const showBtn = document.getElementById("showBtn");
+  const answerBtns = document.getElementById("answerBtns");
+  const scriptTagEl = document.getElementById("scriptTag");
+
+  if (!currentKey) {
+    romajiEl.textContent = "—";
+    romajiEl.classList.remove("hidden");
+    kanaEl.classList.add("hidden");
+    scriptTagEl.classList.add("hidden");
+    emptyEl.style.display = "block";
+    showBtn.classList.add("hidden");
+    answerBtns.classList.add("hidden");
+    return;
+  }
+
+  const [script, kana] = currentKey.split(":");
+  const base = script === "hira" ? "ひらがな · Hiragana" : "カタカナ · Katakana";
+  scriptTagEl.textContent = base + " · " + romajiFor(currentKey);
+  scriptTagEl.classList.remove("hidden");
+  romajiEl.textContent = romajiFor(currentKey);
+  romajiEl.classList.remove("hidden");
+  kanaEl.textContent = kana;
+  kanaEl.classList.add("hidden");
+  emptyEl.style.display = "none";
+  showBtn.classList.remove("hidden");
+  answerBtns.classList.add("hidden");
+  updateStats();
+}
+
+function reveal() {
+  if (!currentKey) return;
+  revealed = true;
+  document.getElementById("kana").classList.remove("hidden");
+  document.getElementById("showBtn").classList.add("hidden");
+  document.getElementById("answerBtns").classList.remove("hidden");
+
+  const prev = previewGrades(cards[currentKey]);
+  document.getElementById("i-again").textContent = prev.again.label;
+  document.getElementById("i-hard").textContent  = prev.hard.label;
+  document.getElementById("i-good").textContent  = prev.good.label;
+  document.getElementById("i-easy").textContent  = prev.easy.label;
+}
+
+function grade(g) {
+  if (!currentKey || !revealed) return;
+  applyGrade(cards[currentKey], g);
+  saveCards();
+  showNext();
+}
+
+function saveCards() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(cards)); } catch {}
+}
+function loadCards() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) cards = JSON.parse(raw);
+  } catch { cards = {}; }
+}
+function saveSelection() {
+  try { localStorage.setItem(SELECTION_KEY, JSON.stringify(selectedGroups)); } catch {}
+}
+function loadSelection() {
+  try {
+    const raw = localStorage.getItem(SELECTION_KEY);
+    if (raw) selectedGroups = JSON.parse(raw);
+  } catch { selectedGroups = {}; }
+  if (Object.keys(selectedGroups).length === 0) {
+    selectedGroups["hira:あ row"] = true;
+    selectedGroups["hira:か row"] = true;
+  }
+}
+
+document.getElementById("showBtn").addEventListener("click", reveal);
+document.getElementById("answerBtns").addEventListener("click", e => {
+  const b = e.target.closest("button[data-grade]");
+  if (b) grade(b.dataset.grade);
+});
+document.getElementById("resetBtn").addEventListener("click", () => {
+  if (confirm("Reset all flashcard progress? (Your group selection is kept.)")) {
+    cards = {};
+    saveCards();
+    showNext();
+  }
+});
+
+document.getElementById("tabletModeBtn").addEventListener("click", () => {
+  const on = document.body.classList.toggle("tablet-mode");
+  document.getElementById("tabletModeBtn").textContent = on ? "Normal mode" : "Tablet mode";
+  try { localStorage.setItem("kana-tablet-mode", on ? "1" : "0"); } catch {}
+});
+try {
+  if (localStorage.getItem("kana-tablet-mode") === "1") {
+    document.body.classList.add("tablet-mode");
+    document.getElementById("tabletModeBtn").textContent = "Normal mode";
+  }
+} catch {}
+
+document.getElementById("openSets").onclick = openSetModal;
+document.getElementById("cancelSets").onclick = closeSetModal;
+document.getElementById("modalX").onclick = closeSetModal;
+document.getElementById("applySets").onclick = applySetModal;
+document.getElementById("selAll").onclick = stageAll;
+document.getElementById("selBasicHira").onclick = stageBasicHira;
+document.getElementById("selBasicKata").onclick = stageBasicKata;
+document.getElementById("selNone").onclick = stageNone;
+
+document.addEventListener("keydown", e => {
+  if (e.target.tagName === "INPUT") return;
+  if (e.key === "Escape" && !document.getElementById("modal").classList.contains("hidden")) {
+    closeSetModal();
+    return;
+  }
+  const mod = e.ctrlKey || e.metaKey;
+  if (mod && (e.key === "z" || e.key === "Z")) {
+    e.preventDefault();
+    if (e.shiftKey) redo(); else undo();
+    return;
+  }
+  if (mod && (e.key === "y" || e.key === "Y")) {
+    e.preventDefault();
+    redo();
+    return;
+  }
+  if (e.code === "Space") { e.preventDefault(); if (!revealed) reveal(); }
+  else if (revealed) {
+    if (e.key === "1") grade("again");
+    else if (e.key === "2") grade("hard");
+    else if (e.key === "3") grade("good");
+    else if (e.key === "4") grade("easy");
+  }
+});
+
+const drawCanvas = document.getElementById("drawCanvas");
+const drawCtx = drawCanvas.getContext("2d");
+
+const CHALK_RADIUS = 5.6;   // average half-width of the chalk line
+const CHALK_DENSITY = 3.0;  // stamps per pixel along the segment
+const CHALK_GRAINS = 14;    // dust particles per stamp
+const CHALK_COLORS = [
+  "rgba(244,240,232,0.95)",  // bright chalk core
+  "rgba(244,240,232,0.75)",  // mid
+  "rgba(255,255,255,0.55)",  // bright highlight grains
+  "rgba(220,216,206,0.45)",  // greyer dust on the fringe
+];
+
+let drawing = false;
+let lastPt = null;
+
+const HISTORY_CAP = 30;
+let undoStack = [];
+let redoStack = [];
+
+function snapshot() {
+  return drawCtx.getImageData(0, 0, drawCanvas.width, drawCanvas.height);
+}
+function restoreSnapshot(snap) {
+  drawCtx.putImageData(snap, 0, 0);
+}
+function pushUndo() {
+  undoStack.push(snapshot());
+  if (undoStack.length > HISTORY_CAP) undoStack.shift();
+  redoStack = [];
+}
+function undo() {
+  if (!undoStack.length) return;
+  redoStack.push(snapshot());
+  if (redoStack.length > HISTORY_CAP) redoStack.shift();
+  restoreSnapshot(undoStack.pop());
+}
+function redo() {
+  if (!redoStack.length) return;
+  undoStack.push(snapshot());
+  if (undoStack.length > HISTORY_CAP) undoStack.shift();
+  restoreSnapshot(redoStack.pop());
+}
+
+function drawPos(e) {
+  const rect = drawCanvas.getBoundingClientRect();
+  const t = e.touches ? e.touches[0] : e;
+  const sx = drawCanvas.width / rect.width;
+  const sy = drawCanvas.height / rect.height;
+  return { x: (t.clientX - rect.left) * sx, y: (t.clientY - rect.top) * sy };
+}
+
+function chalkStamp(x, y) {
+  for (let i = 0; i < CHALK_GRAINS; i++) {
+    // Jittered offset, weighted toward the center for a soft round dot
+    const r = (Math.random() ** 0.7) * CHALK_RADIUS;
+    const theta = Math.random() * Math.PI * 2;
+    const px = x + Math.cos(theta) * r;
+    const py = y + Math.sin(theta) * r;
+    const grain = 0.5 + Math.random() * 1.4; // grain size in px
+    drawCtx.fillStyle = CHALK_COLORS[(Math.random() * CHALK_COLORS.length) | 0];
+    drawCtx.fillRect(px - grain / 2, py - grain / 2, grain, grain);
+  }
+}
+
+function chalkSegment(a, b) {
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const dist = Math.hypot(dx, dy);
+  const steps = Math.max(1, Math.ceil(dist * CHALK_DENSITY));
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps;
+    const jitter = (Math.random() - 0.5) * 1.5;
+    const nx = -dy / (dist || 1);
+    const ny =  dx / (dist || 1);
+    chalkStamp(a.x + dx * t + nx * jitter, a.y + dy * t + ny * jitter);
+  }
+}
+
+function drawStart(e) {
+  e.preventDefault();
+  pushUndo();
+  drawing = true;
+  const p = drawPos(e);
+  lastPt = p;
+  chalkStamp(p.x, p.y);
+}
+function drawMove(e) {
+  if (!drawing) return;
+  e.preventDefault();
+  const p = drawPos(e);
+  if (lastPt) chalkSegment(lastPt, p);
+  lastPt = p;
+}
+function drawEnd(e) {
+  if (!drawing) return;
+  e.preventDefault();
+  drawing = false;
+  lastPt = null;
+}
+function clearDraw() {
+  pushUndo();
+  drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+}
+function resetCanvas() {
+  drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+  undoStack = [];
+  redoStack = [];
+}
+drawCanvas.addEventListener("mousedown", drawStart);
+drawCanvas.addEventListener("mousemove", drawMove);
+drawCanvas.addEventListener("mouseup", drawEnd);
+drawCanvas.addEventListener("mouseleave", drawEnd);
+drawCanvas.addEventListener("touchstart", drawStart);
+drawCanvas.addEventListener("touchmove", drawMove);
+drawCanvas.addEventListener("touchend", drawEnd);
+document.getElementById("clearDrawBtn").addEventListener("click", clearDraw);
+
+loadCards();
+loadSelection();
+ensureCardsExist();
+showNext();
+updateStats();
+updateSelectedSummary();
+</script>
+</body>
+</html>
