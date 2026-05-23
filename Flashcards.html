@@ -5,11 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Kana Flashcards</title>
 <style>
-  /* ===========================================================
-     Kana Flashcards — styled to match Quiz.html (XP / SharePoint
-     webpart aesthetic, mid-2000s school portal).
-     =========================================================== */
-
   * { box-sizing: border-box; }
   html, body {
     margin: 0; padding: 0;
@@ -55,7 +50,9 @@
     text-shadow: 1px 1px 0 rgba(0,0,0,0.3);
   }
   .webpart-header .actions { font-size: 10px; font-weight: normal; color: #e8eef7; }
+  .webpart-header .x { color: #fff; text-decoration: none; cursor: pointer; padding: 0 4px; font-weight: bold; }
   .webpart-body { padding: 8px; }
+  .webpart-body.flush { padding-bottom: 0; }
 
   /* Color variants */
   .wp-orange .webpart-header {
@@ -63,18 +60,11 @@
     border-bottom-color: #8a5a00;
     text-shadow: 1px 1px 0 rgba(120,60,0,0.5);
   }
-  .wp-green .webpart-header {
-    background: linear-gradient(to bottom, #c4e0a0 0%, #5a8a3a 100%);
-    border-bottom-color: #2a5a10;
-    text-shadow: 1px 1px 0 rgba(0,60,0,0.4);
-  }
   .wp-red .webpart-header {
     background: linear-gradient(to bottom, #f4a4a4 0%, #c84a4a 100%);
     border-bottom-color: #8a2020;
     text-shadow: 1px 1px 0 rgba(80,0,0,0.4);
   }
-  /* Lighter "actions" subtitle on the red header — keep it readable
-     against the wine-red gradient with the same dark shadow. */
   .wp-red .webpart-header .actions {
     color: #ffe6e6;
     text-shadow: 1px 1px 0 rgba(80,0,0,0.4);
@@ -85,43 +75,9 @@
     color: #5a3a00;
     text-shadow: 1px 1px 0 rgba(255,255,255,0.5);
   }
-  /* On the light gold header, the right-side subtitle needs dark text
-     so it doesn't disappear into the cream gradient. */
   .wp-gold .webpart-header .actions {
     color: #6a4a10;
     text-shadow: 1px 1px 0 rgba(255,255,255,0.5);
-  }
-
-  /* ===== Page head ===== */
-  .page-head {
-    background: #fff;
-    border: 1px solid #a8a8a8;
-    box-shadow: 2px 2px 0 #c4b896;
-    margin-bottom: 10px;
-  }
-  .page-head .header {
-    background: linear-gradient(to bottom, #fff5d4 0%, #f4d98a 100%);
-    border-bottom: 1px solid #c8a040;
-    padding: 6px 10px;
-    display: flex; gap: 10px; align-items: center;
-  }
-  .page-head .header .icon {
-    font-size: 28px; line-height: 1;
-    filter: drop-shadow(1px 1px 0 rgba(0,0,0,0.15));
-    flex-shrink: 0;
-  }
-  .page-head .header .title-block { flex: 1; min-width: 0; }
-  .page-head .header h1 {
-    margin: 0;
-    font-family: Georgia, "Trebuchet MS", serif;
-    font-style: italic;
-    font-size: 17px; font-weight: bold;
-    color: #5a3a00;
-    text-shadow: 1px 1px 0 rgba(255,255,255,0.6);
-  }
-  .page-head .header .sub {
-    font-size: 11px; color: #6a4a10;
-    font-style: italic; margin-top: 2px;
   }
 
   /* ===== Buttons (ph-btn) ===== */
@@ -238,7 +194,6 @@
     font-weight: bold;
   }
 
-
   /* ===== Card area ===== */
   .card-stage {
     background:
@@ -265,15 +220,12 @@
     color: #4a3a0a;
     background: linear-gradient(to bottom, #fff5d4 0%, #f4d98a 100%);
     border: 1px solid #c8a040;
-    /* Dark navy drop shadow to match the slate chalkboard it sits on. */
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.5), 2px 2px 0 rgba(10,20,50,0.5);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.5), 2px 2px 0 rgba(10,20,50,0.5);
     padding: 5px 18px;
     text-transform: uppercase;
     letter-spacing: 0.1em;
     text-shadow: 1px 1px 0 rgba(255,255,255,0.5);
   }
-  /* Floats the script tag over the top of the canvas — pinned absolutely
-     so it overlaps the chalkboard surface itself, not the grey frame. */
   .script-tag-wrap {
     position: absolute;
     top: 14px;
@@ -281,7 +233,7 @@
     right: 0;
     display: flex;
     justify-content: center;
-    pointer-events: none;   /* clicks pass through to the canvas */
+    pointer-events: none;
     z-index: 2;
   }
   .romaji {
@@ -297,8 +249,6 @@
     font-size: 104px;
     line-height: 1;
     color: #2a5a9a;
-    /* Layered shadow: white highlight on top, dark drop below, faint
-       diffuse glow underneath — gives an embossed inky-stamp look. */
     text-shadow:
       1px 1px 0 rgba(255,255,255,0.85),
       -1px -1px 0 rgba(255,255,255,0.4),
@@ -327,7 +277,7 @@
 
   /* ===== Drawing canvas ===== */
   .chalkboard-frame {
-    position: relative;       /* anchor for the floating script tag */
+    position: relative;
     border: 1px solid #2a5a9a;
     background: #4a5764;
     box-shadow: inset 0 0 0 1px #1a3a6b, 1px 1px 0 #c4b896;
@@ -392,7 +342,6 @@
     justify-content: flex-start;
   }
 
-  /* Two equal-height panels inside a single webpart */
   .study-grid {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -429,9 +378,7 @@
   }
 
   @media (max-width: 720px) {
-    .study-grid { grid-template-columns: 1fr; }
-    .info-grid  { grid-template-columns: 1fr; }
-    .sub-row    { grid-template-columns: 1fr; }
+    .study-grid, .sub-row { grid-template-columns: 1fr; }
     .romaji { font-size: 36px; }
     .kana   { font-size: 72px; min-height: 76px; }
   }
@@ -595,7 +542,7 @@
     <div class="webpart-header">
       <span>Study</span>
     </div>
-    <div class="webpart-body" style="padding-bottom: 0;">
+    <div class="webpart-body flush">
       <div class="study-grid">
 
         <div class="study-pane">
@@ -644,10 +591,10 @@
     </div>
   </div>
 
-  <div class="webpart wp-orange hidden" id="modal" style="margin-bottom: 10px;">
+  <div class="webpart wp-orange hidden" id="modal">
     <div class="webpart-header">
       <span>Select Kana</span>
-      <a class="x" id="modalX" title="Close" style="color:#fff;text-decoration:none;cursor:pointer;padding:0 4px;font-weight:bold;">✕</a>
+      <a class="x" id="modalX" title="Close">✕</a>
     </div>
     <div class="webpart-body">
       <div id="setList"></div>
@@ -656,6 +603,9 @@
       <button class="ph-btn" id="selAll">Select all</button>
       <button class="ph-btn" id="selBasicHira">Basic hiragana</button>
       <button class="ph-btn" id="selBasicKata">Basic katakana</button>
+      <button class="ph-btn" id="selYoonHira">Yōon hiragana</button>
+      <button class="ph-btn" id="selYoonKata">Yōon katakana</button>
+      <button class="ph-btn" id="selDakuten">Dakuten</button>
       <button class="ph-btn" id="selNone">Clear</button>
       <span class="spacer"></span>
       <button class="ph-btn" id="cancelSets">Cancel</button>
@@ -727,8 +677,6 @@
 
 </div>
 
-
-
 <script>
 const KANA_GROUPS = {
   hira: {
@@ -742,11 +690,22 @@ const KANA_GROUPS = {
     "や row":      [["や","ya"],["ゆ","yu"],["よ","yo"]],
     "ら row":      [["ら","ra"],["り","ri"],["る","ru"],["れ","re"],["ろ","ro"]],
     "わ row":      [["わ","wa"],["を","wo"],["ん","n"]],
-    "Dakuten":     [["が","ga"],["ぎ","gi"],["ぐ","gu"],["げ","ge"],["ご","go"],
-                    ["ざ","za"],["じ","ji"],["ず","zu"],["ぜ","ze"],["ぞ","zo"],
-                    ["だ","da"],["で","de"],["ど","do"],
-                    ["ば","ba"],["び","bi"],["ぶ","bu"],["べ","be"],["ぼ","bo"]],
-    "Handakuten":  [["ぱ","pa"],["ぴ","pi"],["ぷ","pu"],["ぺ","pe"],["ぽ","po"]],
+    "Dakuten":         [["が","ga"],["ぎ","gi"],["ぐ","gu"],["げ","ge"],["ご","go"],
+                        ["ざ","za"],["じ","ji"],["ず","zu"],["ぜ","ze"],["ぞ","zo"],
+                        ["だ","da"],["で","de"],["ど","do"],
+                        ["ば","ba"],["び","bi"],["ぶ","bu"],["べ","be"],["ぼ","bo"]],
+    "Handakuten":      [["ぱ","pa"],["ぴ","pi"],["ぷ","pu"],["ぺ","pe"],["ぽ","po"]],
+    "Yōon":            [["きゃ","kya"],["きゅ","kyu"],["きょ","kyo"],
+                        ["しゃ","sha"],["しゅ","shu"],["しょ","sho"],
+                        ["ちゃ","cha"],["ちゅ","chu"],["ちょ","cho"],
+                        ["にゃ","nya"],["にゅ","nyu"],["にょ","nyo"],
+                        ["ひゃ","hya"],["ひゅ","hyu"],["ひょ","hyo"],
+                        ["みゃ","mya"],["みゅ","myu"],["みょ","myo"],
+                        ["りゃ","rya"],["りゅ","ryu"],["りょ","ryo"]],
+    "Yōon Dakuten":    [["ぎゃ","gya"],["ぎゅ","gyu"],["ぎょ","gyo"],
+                        ["じゃ","ja"], ["じゅ","ju"], ["じょ","jo"],
+                        ["びゃ","bya"],["びゅ","byu"],["びょ","byo"]],
+    "Yōon Handakuten": [["ぴゃ","pya"],["ぴゅ","pyu"],["ぴょ","pyo"]],
   },
   kata: {
     "ア row":      [["ア","a"],["イ","i"],["ウ","u"],["エ","e"],["オ","o"]],
@@ -759,11 +718,22 @@ const KANA_GROUPS = {
     "ヤ row":      [["ヤ","ya"],["ユ","yu"],["ヨ","yo"]],
     "ラ row":      [["ラ","ra"],["リ","ri"],["ル","ru"],["レ","re"],["ロ","ro"]],
     "ワ row":      [["ワ","wa"],["ヲ","wo"],["ン","n"]],
-    "Dakuten":     [["ガ","ga"],["ギ","gi"],["グ","gu"],["ゲ","ge"],["ゴ","go"],
-                    ["ザ","za"],["ジ","ji"],["ズ","zu"],["ゼ","ze"],["ゾ","zo"],
-                    ["ダ","da"],["デ","de"],["ド","do"],
-                    ["バ","ba"],["ビ","bi"],["ブ","bu"],["ベ","be"],["ボ","bo"]],
-    "Handakuten":  [["パ","pa"],["ピ","pi"],["プ","pu"],["ペ","pe"],["ポ","po"]],
+    "Dakuten":         [["ガ","ga"],["ギ","gi"],["グ","gu"],["ゲ","ge"],["ゴ","go"],
+                        ["ザ","za"],["ジ","ji"],["ズ","zu"],["ゼ","ze"],["ゾ","zo"],
+                        ["ダ","da"],["デ","de"],["ド","do"],
+                        ["バ","ba"],["ビ","bi"],["ブ","bu"],["ベ","be"],["ボ","bo"]],
+    "Handakuten":      [["パ","pa"],["ピ","pi"],["プ","pu"],["ペ","pe"],["ポ","po"]],
+    "Yōon":            [["キャ","kya"],["キュ","kyu"],["キョ","kyo"],
+                        ["シャ","sha"],["シュ","shu"],["ショ","sho"],
+                        ["チャ","cha"],["チュ","chu"],["チョ","cho"],
+                        ["ニャ","nya"],["ニュ","nyu"],["ニョ","nyo"],
+                        ["ヒャ","hya"],["ヒュ","hyu"],["ヒョ","hyo"],
+                        ["ミャ","mya"],["ミュ","myu"],["ミョ","myo"],
+                        ["リャ","rya"],["リュ","ryu"],["リョ","ryo"]],
+    "Yōon Dakuten":    [["ギャ","gya"],["ギュ","gyu"],["ギョ","gyo"],
+                        ["ジャ","ja"], ["ジュ","ju"], ["ジョ","jo"],
+                        ["ビャ","bya"],["ビュ","byu"],["ビョ","byo"]],
+    "Yōon Handakuten": [["ピャ","pya"],["ピュ","pyu"],["ピョ","pyo"]],
   }
 };
 
@@ -1045,6 +1015,7 @@ function applySetModal() {
 
 const BASIC_HIRA_GROUPS = ["あ row","か row","さ row","た row","な row","は row","ま row","や row","ら row","わ row"];
 const BASIC_KATA_GROUPS = ["ア row","カ row","サ row","タ row","ナ row","ハ row","マ row","ヤ row","ラ row","ワ row"];
+const YOON_GROUPS = ["Yōon","Yōon Dakuten","Yōon Handakuten"];
 
 function stageAll() {
   stagedGroups = {};
@@ -1061,6 +1032,24 @@ function stageBasicHira() {
 function stageBasicKata() {
   stagedGroups = {};
   for (const g of BASIC_KATA_GROUPS) stagedGroups["kata:" + g] = true;
+  renderSetList();
+}
+function stageYoonHira() {
+  stagedGroups = {};
+  for (const g of YOON_GROUPS) stagedGroups["hira:" + g] = true;
+  renderSetList();
+}
+function stageYoonKata() {
+  stagedGroups = {};
+  for (const g of YOON_GROUPS) stagedGroups["kata:" + g] = true;
+  renderSetList();
+}
+function stageDakuten() {
+  stagedGroups = {};
+  stagedGroups["hira:Dakuten"] = true;
+  stagedGroups["hira:Handakuten"] = true;
+  stagedGroups["kata:Dakuten"] = true;
+  stagedGroups["kata:Handakuten"] = true;
   renderSetList();
 }
 function stageNone() {
@@ -1182,6 +1171,9 @@ document.getElementById("applySets").onclick = applySetModal;
 document.getElementById("selAll").onclick = stageAll;
 document.getElementById("selBasicHira").onclick = stageBasicHira;
 document.getElementById("selBasicKata").onclick = stageBasicKata;
+document.getElementById("selYoonHira").onclick = stageYoonHira;
+document.getElementById("selYoonKata").onclick = stageYoonKata;
+document.getElementById("selDakuten").onclick = stageDakuten;
 document.getElementById("selNone").onclick = stageNone;
 
 document.addEventListener("keydown", e => {
@@ -1264,12 +1256,11 @@ function drawPos(e) {
 
 function chalkStamp(x, y) {
   for (let i = 0; i < CHALK_GRAINS; i++) {
-    // Jittered offset, weighted toward the center for a soft round dot
     const r = (Math.random() ** 0.7) * CHALK_RADIUS;
     const theta = Math.random() * Math.PI * 2;
     const px = x + Math.cos(theta) * r;
     const py = y + Math.sin(theta) * r;
-    const grain = 0.5 + Math.random() * 1.4; // grain size in px
+    const grain = 0.5 + Math.random() * 1.4;
     drawCtx.fillStyle = CHALK_COLORS[(Math.random() * CHALK_COLORS.length) | 0];
     drawCtx.fillRect(px - grain / 2, py - grain / 2, grain, grain);
   }

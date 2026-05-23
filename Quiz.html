@@ -80,7 +80,7 @@
     text-shadow: 1px 1px 0 rgba(255,255,255,0.5);
   }
 
-  /* ===== Page head (title strip above the ticker) ===== */
+  /* ===== Actions row (below the ticker) ===== */
   .actions-row {
     background: #fff;
     border-top: 1px solid #b8b4a8;
@@ -216,20 +216,16 @@
   }
   .cell {
     position: relative;
-    width: 92px;
-    flex: 0 0 92px;
+    width: 106px;
+    flex: 0 0 85px;
     height: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
-    /* "Chalkduster" exists on macOS; "Bradley Hand" / "Comic Sans MS" are
-       acceptable fallbacks on other platforms. Japanese glyphs always fall
-       through to the JP fonts since the Latin chalk fonts don't cover kana. */
     font-family: "Chalkduster", "Bradley Hand", "Hiragino Sans", "Yu Gothic", "Noto Sans JP", "MS Mincho", serif;
-    font-size: 78px;
+    font-size: 70px;
     font-weight: 400;
     color: #f4f0e8;
-    /* chalk halo — soft white glow + faint dust around the glyph */
     text-shadow:
       0 0 1px rgba(255,255,255,0.55),
       0 0 4px rgba(255,255,255,0.15),
@@ -239,13 +235,32 @@
      romaji .hint above it crisp and readable. */
   .cell .kana {
     filter: url(#chalk);
+    display: inline-flex;
+    align-items: center;
+    line-height: 1;
+  }
+  /* Second glyph of a compound (yōon) pair — slightly smaller, pulled
+     tight against the first glyph. */
+  .cell .kana .yoon-small {
+    font-size: 0.865em;
+    vertical-align: baseline;
+    line-height: 1;
+    margin-left: -0.12em;
+    margin-right: 0.18em;
+  }
+  /* Digraph (yōon) cells — wider than regular to fit both glyphs;
+     second glyph is sized down via .yoon-small. */
+  .cell.digraph {
+    width: 110px;
+    flex: 0 0 120px;
+    font-size: 55px;
   }
   .cell .hint {
     position: absolute;
     top: 14px;
     left: 0; right: 0;
     text-align: center;
-    font-size: 13px;
+    font-size: 20px;
     font-family: Verdana, Tahoma, sans-serif;
     font-weight: bold;
     color: #fff;
@@ -467,9 +482,9 @@
   .modal {
     background: #fff;
     border: 1px solid #a8a8a8;
-    box-shadow: 4px 4px 0 rgba(0,0,0,0.25), 2px 2px 0 #c4b896;
+    box-shadow: 4px 4px 0 rgba(0,0,0,0.25);
     width: 100%;
-    max-width: 580px;
+    max-width: 595px;
     max-height: 85vh;
     overflow: hidden;
     display: flex; flex-direction: column;
@@ -547,7 +562,8 @@
     .sub-row { grid-template-columns: 1fr; }
   }
   @media (max-width: 600px) {
-    .cell { width: 72px; flex-basis: 72px; font-size: 60px; }
+    .cell { width: 83px; flex-basis: 83px; font-size: 60px; }
+    .cell.digraph { width: 110px; flex-basis: 83px; font-size: 56px; }
     .ticker { height: 160px; }
   }
 </style>
@@ -676,6 +692,8 @@
       <button class="ph-btn" id="selAll">Select all</button>
       <button class="ph-btn" id="selBasic">Basic katakana</button>
       <button class="ph-btn" id="selHira">Basic hiragana</button>
+      <button class="ph-btn" id="selDakuten" title="Add dakuten and handakuten (non-compound) on top of the current selection">+ Dakuten</button>
+      <button class="ph-btn" id="selCompound" title="Add yōon compounds (きゃ, しゅ, ちょ, etc.) on top of the current selection">+ Compound</button>
       <button class="ph-btn" id="selNone">Clear</button>
       <span class="spacer"></span>
       <button class="ph-btn" id="cancelSets">Cancel</button>
@@ -704,6 +722,20 @@ const SETS = {
                     ["ダ","da"],["デ","de"],["ド","do"],
                     ["バ","ba"],["ビ","bi"],["ブ","bu"],["ベ","be"],["ボ","bo"]] },
   k_handakuten: { group: "Katakana", label: "Handakuten",     chars: [["パ","pa"],["ピ","pi"],["プ","pu"],["ペ","pe"],["ポ","po"]] },
+  k_yoon:       { group: "Katakana", label: "Compound (yōon)", chars: [
+                    ["キャ","kya"],["キュ","kyu"],["キョ","kyo"],
+                    ["シャ","sha"],["シュ","shu"],["ショ","sho"],
+                    ["チャ","cha"],["チュ","chu"],["チョ","cho"],
+                    ["ニャ","nya"],["ニュ","nyu"],["ニョ","nyo"],
+                    ["ヒャ","hya"],["ヒュ","hyu"],["ヒョ","hyo"],
+                    ["ミャ","mya"],["ミュ","myu"],["ミョ","myo"],
+                    ["リャ","rya"],["リュ","ryu"],["リョ","ryo"]] },
+  k_yoon_dak:   { group: "Katakana", label: "Compound + dakuten", chars: [
+                    ["ギャ","gya"],["ギュ","gyu"],["ギョ","gyo"],
+                    ["ジャ","ja"], ["ジュ","ju"], ["ジョ","jo"],
+                    ["ビャ","bya"],["ビュ","byu"],["ビョ","byo"]] },
+  k_yoon_handak:{ group: "Katakana", label: "Compound + handakuten", chars: [
+                    ["ピャ","pya"],["ピュ","pyu"],["ピョ","pyo"]] },
 
   // ---- Hiragana ----
   h_vowels:     { group: "Hiragana", label: "Vowels (あ-お)", chars: [["あ","a"],["い","i"],["う","u"],["え","e"],["お","o"]] },
@@ -722,9 +754,26 @@ const SETS = {
                     ["だ","da"],["で","de"],["ど","do"],
                     ["ば","ba"],["び","bi"],["ぶ","bu"],["べ","be"],["ぼ","bo"]] },
   h_handakuten: { group: "Hiragana", label: "Handakuten",     chars: [["ぱ","pa"],["ぴ","pi"],["ぷ","pu"],["ぺ","pe"],["ぽ","po"]] },
+  h_yoon:       { group: "Hiragana", label: "Compound (yōon)", chars: [
+                    ["きゃ","kya"],["きゅ","kyu"],["きょ","kyo"],
+                    ["しゃ","sha"],["しゅ","shu"],["しょ","sho"],
+                    ["ちゃ","cha"],["ちゅ","chu"],["ちょ","cho"],
+                    ["にゃ","nya"],["にゅ","nyu"],["にょ","nyo"],
+                    ["ひゃ","hya"],["ひゅ","hyu"],["ひょ","hyo"],
+                    ["みゃ","mya"],["みゅ","myu"],["みょ","myo"],
+                    ["りゃ","rya"],["りゅ","ryu"],["りょ","ryo"]] },
+  h_yoon_dak:   { group: "Hiragana", label: "Compound + dakuten", chars: [
+                    ["ぎゃ","gya"],["ぎゅ","gyu"],["ぎょ","gyo"],
+                    ["じゃ","ja"], ["じゅ","ju"], ["じょ","jo"],
+                    ["びゃ","bya"],["びゅ","byu"],["びょ","byo"]] },
+  h_yoon_handak:{ group: "Hiragana", label: "Compound + handakuten", chars: [
+                    ["ぴゃ","pya"],["ぴゅ","pyu"],["ぴょ","pyo"]] },
 };
 const BASIC = ["k_vowels","k_k","k_s","k_t","k_n","k_h","k_m","k_y","k_r","k_w"];
 const BASIC_HIRA = ["h_vowels","h_k","h_s","h_t","h_n","h_h","h_m","h_y","h_r","h_w"];
+// All compound (yōon) groups — both kana, both voiceless and dakuten/handakuten.
+const COMPOUND = ["k_yoon","k_yoon_dak","k_yoon_handak","h_yoon","h_yoon_dak","h_yoon_handak"];
+const DAKUTEN  = ["k_dakuten","k_handakuten","h_dakuten","h_handakuten"];
 
 // ---------- config ----------
 // Cell width is read live from the DOM (see currentCellW) so that the CSS
@@ -735,14 +784,15 @@ const BUFFER_AHEAD = 14;
 
 // Default fallback for the very first call, before any cells exist.
 function currentCellW() {
-  // Prefer the actual rendered width of an existing cell so we're immune to
-  // any CSS changes (media queries, zoom, etc).
-  if (cells.length > 0) {
-    const w = cells[0].getBoundingClientRect().width;
+  // Read from the first non-digraph cell so we always get the regular cell
+  // width — digraph cells may have a different flex-basis.
+  const regular = cells.find(c => !c.classList.contains("digraph"));
+  if (regular) {
+    const w = regular.getBoundingClientRect().width;
     if (w > 0) return w;
   }
-  // No cells yet — fall back to the media query (matches the CSS rule).
-  return window.matchMedia("(max-width:600px)").matches ? 72 : 92;
+  // No regular cells yet — fall back to the media query.
+  return window.matchMedia("(max-width:600px)").matches ? 83 : 85;
 }
 
 // ---------- state ----------
@@ -754,28 +804,21 @@ let currentIndex = 0;
 let stats = { correct: 0, wrong: 0 };
 let queue = [];
 let finished = false;
-let timerStart = 0;        // ms timestamp when user first typed
-let timerInterval = null;  // setInterval handle while running
-let logEntries = [];       // in-memory list of completed runs (also persisted to localStorage when available)
+let timerStart = 0;       // ms timestamp when typing began; 0 = not started
+let timerInterval = null; // setInterval handle while timer is running
+let logEntries = [];      // completed runs; persisted to localStorage
 
-// ---------- persistence (localStorage) ----------
-// Namespaced key so we don't collide with the host portal if this file is
-// served from the same origin as notesapp. All access is wrapped in try/catch
-// so the page degrades gracefully (in-memory only) if storage is blocked
-// (sandboxed iframe, private mode quota, etc).
+// ---------- persistence ----------
+// Namespaced so it doesn't collide with the host portal on the same origin.
+// All calls are try/catch so the page degrades gracefully if storage is blocked.
 const LOG_KEY = "kanaquiz.log.v1";
-const LOG_MAX = 50;        // keep at most this many entries (newest wins)
+const LOG_MAX = 50;
 
 function saveLog() {
   try {
-    // Trim to cap before saving — also enforce it in memory so renderLog stays in sync.
-    if (logEntries.length > LOG_MAX) {
-      logEntries = logEntries.slice(-LOG_MAX);
-    }
+    if (logEntries.length > LOG_MAX) logEntries = logEntries.slice(-LOG_MAX);
     localStorage.setItem(LOG_KEY, JSON.stringify(logEntries));
-  } catch (e) {
-    // localStorage not available (sandbox, quota, etc) — silently fall back to memory only.
-  }
+  } catch (e) {}
 }
 
 function loadLog() {
@@ -784,7 +827,6 @@ function loadLog() {
     if (!raw) return;
     const parsed = JSON.parse(raw);
     if (Array.isArray(parsed)) {
-      // Light validation: each entry should have the expected shape.
       logEntries = parsed.filter(e =>
         e && typeof e === "object" &&
         typeof e.label === "string" &&
@@ -793,13 +835,12 @@ function loadLog() {
       ).slice(-LOG_MAX);
     }
   } catch (e) {
-    // Corrupt JSON or storage error — start fresh.
     logEntries = [];
   }
 }
 
 function clearStoredLog() {
-  try { localStorage.removeItem(LOG_KEY); } catch (e) { /* ignore */ }
+  try { localStorage.removeItem(LOG_KEY); } catch (e) {}
 }
 
 // ---------- helpers ----------
@@ -838,18 +879,35 @@ function updateSelectedSummary() {
 }
 
 // ---------- ticker ----------
+// Returns the full className string for a cell, preserving the .digraph
+// flag (set when the kana is a two-glyph yōon compound, e.g. ミュ).
+function cellStateClass(el, state) {
+  const extra = el._pair && [...el._pair[0]].length > 1 ? " digraph" : "";
+  return "cell " + state + extra;
+}
+
 function makeCell(pair) {
   const el = document.createElement("div");
-  el.className = "cell upcoming";
+  const glyphs = [...pair[0]];
   const kana = document.createElement("span");
   kana.className = "kana";
-  kana.textContent = pair[0];
+  if (glyphs.length > 1) {
+    // Digraph: first glyph at full size, second scaled down via .yoon-small
+    kana.appendChild(document.createTextNode(glyphs[0]));
+    const small = document.createElement("span");
+    small.className = "yoon-small";
+    small.textContent = glyphs[1];
+    kana.appendChild(small);
+  } else {
+    kana.textContent = pair[0];
+  }
   const hint = document.createElement("span");
   hint.className = "hint";
   hint.textContent = pair[1];
   el.appendChild(hint);
   el.appendChild(kana);
   el._pair = pair;
+  el.className = cellStateClass(el, "upcoming");
   return el;
 }
 
@@ -866,7 +924,7 @@ function refillAhead() {
 function markCurrent() {
   cells.forEach((c, i) => {
     if (i < currentIndex) return;
-    c.className = i === currentIndex ? "cell current" : "cell upcoming";
+    c.className = cellStateClass(c, i === currentIndex ? "current" : "upcoming");
   });
 }
 
@@ -874,8 +932,18 @@ function markerLeftPx() {
   return $("ticker").clientWidth * MARKER_FRAC;
 }
 function offsetForCurrent() {
-  const cw = currentCellW();
-  return markerLeftPx() - (currentIndex * cw + cw / 2);
+  // Sum actual rendered widths of all cells up to (but not including)
+  // currentIndex, then add half the current cell's width to land on its
+  // centre. This handles mixed widths (regular 85px vs digraph 120px)
+  // correctly regardless of how many digraphs appear before the cursor.
+  let offset = 0;
+  for (let i = 0; i < currentIndex && i < cells.length; i++) {
+    offset += cells[i].getBoundingClientRect().width;
+  }
+  const curW = cells[currentIndex]
+    ? cells[currentIndex].getBoundingClientRect().width
+    : currentCellW();
+  return markerLeftPx() - (offset + curW / 2);
 }
 
 function resetTicker() {
@@ -935,21 +1003,31 @@ function resetTimer() {
 // ----- timer log -----
 function shortSelectionLabel() {
   // Compact label for the Set column. Examples:
-  //  "Basic katakana", "Basic hiragana", "All kana", "Mixed (3K+2H)", "3 katakana"
+  //  "Basic katakana", "Basic hiragana +cmpd", "All kana", "Mixed (3K+2H)", "3 katakana"
   let kCount = 0, hCount = 0;
   for (const k of selected) {
     if (!SETS[k]) continue;
     if (SETS[k].group === "Katakana") kCount++;
     else if (SETS[k].group === "Hiragana") hCount++;
   }
-  const basicK = new Set(BASIC), basicH = new Set(BASIC_HIRA);
   const sel = [...selected];
-  const isBasicK = sel.length === basicK.size && sel.every(k => basicK.has(k));
-  const isBasicH = sel.length === basicH.size && sel.every(k => basicH.has(k));
   const isAll    = sel.length === Object.keys(SETS).length;
-  if (isAll)    return "All kana";
-  if (isBasicK) return "Basic katakana";
-  if (isBasicH) return "Basic hiragana";
+  if (isAll) return "All kana";
+
+  // Detect "Basic X" optionally with compound groups added on top.
+  const matchesPreset = (preset) => {
+    const base = new Set(preset);
+    const compounds = sel.filter(k => COMPOUND.includes(k));
+    const nonCompound = sel.filter(k => !COMPOUND.includes(k));
+    if (nonCompound.length !== base.size) return null;
+    if (!nonCompound.every(k => base.has(k))) return null;
+    return compounds.length > 0 ? " +cmpd" : "";
+  };
+  const kSuffix = matchesPreset(BASIC);
+  if (kSuffix !== null) return "Basic katakana" + kSuffix;
+  const hSuffix = matchesPreset(BASIC_HIRA);
+  if (hSuffix !== null) return "Basic hiragana" + hSuffix;
+
   if (kCount && hCount) return `Mixed (${kCount}K+${hCount}H)`;
   if (kCount) return kCount + " katakana group" + (kCount === 1 ? "" : "s");
   if (hCount) return hCount + " hiragana group" + (hCount === 1 ? "" : "s");
@@ -987,20 +1065,16 @@ function renderLog() {
 
 // ----- rating: "some arbitrary-ass math" -----
 // Combines time-per-character (speed) with accuracy-squared (precision).
-// Higher = better. Roughly 0–200 typical range; we tier into letter grades.
+// score = speedFactor(1.5s/char baseline, capped 2×) × accuracy² × 100
 function computeScore(ms, accPct, chars) {
   if (!chars || !ms) return 0;
   const secPerChar = (ms / 1000) / chars;
   if (secPerChar <= 0) return 0;
-  // 1.5 s/char = neutral 1.0; faster pushes the factor up, capped at 2.0
-  // so blazing through 5 chars in a second doesn't completely dominate.
   const speedFactor = Math.min(2, Math.max(0, 1.5 / secPerChar));
-  // Accuracy weighted squared — 100% → 1.0, 90% → 0.81, 75% → 0.56, 50% → 0.25
   const accFactor = Math.pow(Math.max(0, accPct) / 100, 2);
   return speedFactor * accFactor * 100;
 }
 
-// Tier a numeric score into a letter grade + a color class
 function scoreTier(score) {
   if (score >= 150) return { grade: "S+", cls: "tier-splus", flavor: "untouchable" };
   if (score >= 120) return { grade: "S",  cls: "tier-s",     flavor: "flawless"   };
@@ -1011,11 +1085,10 @@ function scoreTier(score) {
   return                   { grade: "F",  cls: "tier-f",     flavor: "ouch"       };
 }
 
-// Pull raw numbers off an entry — preferring stored numeric fields,
-// falling back to parsing the formatted strings for legacy entries.
+// Read raw ms/acc from an entry; fall back to parsing formatted strings
+// for entries saved before raw fields were added.
 function entryMs(e) {
   if (typeof e.ms === "number") return e.ms;
-  // parse "M:SS"
   const m = /^(\d+):(\d+)/.exec(e.time || "");
   if (!m) return 0;
   return (parseInt(m[1],10) * 60 + parseInt(m[2],10)) * 1000;
@@ -1035,9 +1108,9 @@ function logRun() {
     label:  shortSelectionLabel(),
     chars:  pool.length,
     time:   formatElapsed(ms),
-    ms:     ms,         // raw — for exact rating math later
+    ms:     ms,
     acc:    acc,
-    accPct: accPct,     // raw — for exact rating math later
+    accPct: accPct,
   });
   saveLog();    // persist after every completed run
   renderLog();
@@ -1065,14 +1138,14 @@ function evaluateInput() {
   const buf = input.value;
   if (buf === target) {
     const el = cells[currentIndex];
-    el.className = "cell correct";
+    el.className = cellStateClass(el, "correct");
     el.querySelector(".hint").textContent = target;
     stats.correct++;
     input.value = "";
     advance();
   } else if (buf.length >= target.length) {
     const el = cells[currentIndex];
-    el.className = "cell wrong";
+    el.className = cellStateClass(el, "wrong");
     el.querySelector(".hint").textContent = target;
     stats.wrong++;
     queue.push([...el._pair]);
@@ -1156,6 +1229,27 @@ $("applySets").onclick = () => {
 $("selAll").onclick   = () => { selected = new Set(Object.keys(SETS)); renderSets(); };
 $("selBasic").onclick = () => { selected = new Set(BASIC); renderSets(); };
 $("selHira").onclick  = () => { selected = new Set(BASIC_HIRA); renderSets(); };
+// Additive toggle: if any compound groups are currently selected, strip them;
+// otherwise add all of them on top of the existing selection. Lets you pair
+// compounds with whatever base set you've chosen.
+$("selDakuten").onclick = () => {
+  const anySelected = DAKUTEN.some(k => selected.has(k));
+  if (anySelected) {
+    DAKUTEN.forEach(k => selected.delete(k));
+  } else {
+    DAKUTEN.forEach(k => selected.add(k));
+  }
+  renderSets();
+};
+$("selCompound").onclick = () => {
+  const anySelected = COMPOUND.some(k => selected.has(k));
+  if (anySelected) {
+    COMPOUND.forEach(k => selected.delete(k));
+  } else {
+    COMPOUND.forEach(k => selected.add(k));
+  }
+  renderSets();
+};
 $("selNone").onclick  = () => { selected = new Set(); renderSets(); };
 $("restart").onclick = () => { resetTicker(); };
 
