@@ -237,17 +237,27 @@
     z-index: 2;
   }
   .romaji {
+    /* font-size is set dynamically by fitText(); this is the ceiling. */
     font: italic bold 48px Georgia, "Trebuchet MS", serif;
     color: #2a5a9a;
     text-shadow: 1px 1px 0 rgba(255,255,255,0.6), 2px 2px 0 rgba(0,0,0,0.08);
-    line-height: 1.1;
+    line-height: 1.15;
     margin: 4px 0;
     letter-spacing: 0.02em;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    max-width: 100%;
   }
+  /* Each visual line stays on one line — fitText() shrinks the font instead
+     of letting the browser wrap, so we never get awkward mid-word breaks. */
+  .romaji .line { display: block; white-space: nowrap; }
   .kana {
     font-family: "Hiragino Sans", "Yu Gothic", "Noto Sans JP", "MS Mincho", serif;
+    /* font-size is set dynamically by fitText(); this is the ceiling. */
     font-size: 104px;
-    line-height: 1;
+    line-height: 1.05;
     color: #2a5a9a;
     text-shadow:
       1px 1px 0 rgba(255,255,255,0.85),
@@ -257,6 +267,26 @@
        0 6px 12px rgba(42, 90, 154, 0.18);
     min-height: 110px;
     letter-spacing: 0.02em;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    max-width: 100%;
+  }
+  .kana .line       { display: block; white-space: nowrap; }
+  .kana .kana-main  { display: block; }
+  /* Reading line: smaller, slightly dimmer, sits under its kanji */
+  .kana .kana-reading {
+    display: block;
+    font-size: 0.45em;     /* relative to current .kana font-size */
+    color: #4a7ac8;
+    opacity: 0.85;
+    text-shadow:
+      1px 1px 0 rgba(255,255,255,0.7),
+      1px 1px 0 #d8d4c8;
+    letter-spacing: 0.05em;
+    margin-top: -0.05em;
   }
   .empty {
     color: #888;
@@ -314,17 +344,10 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 10px;
-    align-items: stretch;
+    align-items: start;
   }
   .sub-row .webpart {
     margin-bottom: 0;
-    display: flex;
-    flex-direction: column;
-  }
-  .sub-row .webpart > .webpart-body {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
   }
 
   .about-body,
@@ -505,6 +528,67 @@
     margin-right: 1px;
   }
 
+  /* ===== Vocab editor ===== */
+  .vocab-status {
+    margin-left: 8px;
+    font-size: 10px;
+    font-style: italic;
+    color: #777;
+    align-self: center;
+  }
+  .vocab-status.ok    { color: #5a8a3a; }
+  .vocab-status.warn  { color: #d48a00; }
+  .vocab-status.err   { color: #c84a4a; }
+  .vocab-editor {
+    margin: 6px 0 10px;
+    padding: 8px;
+    background: linear-gradient(to bottom, #fdfcf5 0%, #f4f0e0 100%);
+    border: 1px dotted #c8c4b8;
+  }
+  .vocab-editor .ve-row {
+    display: flex; gap: 6px; flex-wrap: wrap; align-items: center;
+    margin-bottom: 6px;
+  }
+  .vocab-editor input, .vocab-editor select {
+    font: 11px Verdana, Tahoma, sans-serif;
+    padding: 3px 5px;
+    border: 1px solid #a8a8a8;
+    background: #fff;
+    min-width: 0;
+  }
+  .vocab-editor input.face   { flex: 1 1 160px; }
+  .vocab-editor input.answer { flex: 1 1 160px; }
+  .vocab-editor select.cat   { flex: 0 1 160px; }
+  .vocab-editor input.newcat { flex: 1 1 140px; }
+  .vocab-editor .ve-cards {
+    margin-top: 4px;
+    border-top: 1px dotted #c8c4b8;
+    padding-top: 4px;
+  }
+  .vocab-editor .ve-card {
+    display: flex; gap: 6px; align-items: center;
+    padding: 2px 4px;
+    font-size: 11px;
+    border-bottom: 1px dotted #e4e0d0;
+  }
+  .vocab-editor .ve-card:last-child { border-bottom: none; }
+  .vocab-editor .ve-card .face   { flex: 1 1 0; color: #555; }
+  .vocab-editor .ve-card .arrow  { color: #aaa; }
+  .vocab-editor .ve-card .answer { flex: 1 1 0; color: #2a5a9a; font-weight: bold; }
+  .vocab-editor .ve-cat-header {
+    display: flex; align-items: center; gap: 6px;
+    font: italic bold 12px Georgia, "Trebuchet MS", serif;
+    color: #2a5a9a;
+    margin: 8px 0 4px;
+  }
+  .vocab-editor .ve-cat-header .ve-cat-name { flex: 1; }
+  .vocab-editor .ph-btn.mini {
+    height: 18px; line-height: 16px; padding: 0 6px; font-size: 10px;
+  }
+  .vocab-editor .ve-empty {
+    color: #888; font-style: italic; padding: 4px 0;
+  }
+
   .study-footer {
     background: linear-gradient(to bottom, #f4f0e8 0%, #e0dcd4 100%);
     border-top: 1px solid #b8b4a8;
@@ -550,7 +634,7 @@
             <span>Flashcard</span>
           </div>
           <div class="card-stage" id="card">
-            <div class="romaji" id="romaji">—</div>
+            <div class="romaji" id="romaji"><span class="line">—</span></div>
             <div class="kana hidden" id="kana"></div>
             <div class="empty" id="empty">Select kana groups above and press <b>Show answer</b>.</div>
           </div>
@@ -606,6 +690,7 @@
       <button class="ph-btn" id="selYoonHira">Yōon hiragana</button>
       <button class="ph-btn" id="selYoonKata">Yōon katakana</button>
       <button class="ph-btn" id="selDakuten">Dakuten</button>
+      <button class="ph-btn" id="selNumbers">Numbers</button>
       <button class="ph-btn" id="selNone">Clear</button>
       <span class="spacer"></span>
       <button class="ph-btn" id="cancelSets">Cancel</button>
@@ -648,6 +733,10 @@
               </svg>
               Reset progress
             </button>
+            <button class="ph-btn" id="editVocabBtn" title="Toggle vocab edit mode" style="margin-left:6px;">
+              ✎ Edit vocab
+            </button>
+            <span class="vocab-status" id="vocabStatus" title="Vocab storage mode"></span>
           </div>
         </div>
       </div>
@@ -666,6 +755,16 @@
             <li><kbd>1</kbd>/<kbd>2</kbd>/<kbd>3</kbd>/<kbd>4</kbd> — Again / Hard / Good / Easy</li>
             <li><kbd>Ctrl+Z</kbd> — undo last chalk stroke</li>
           </ul>
+          <div class="about-body" style="margin-top:8px;">
+            <b>Card formatting</b> (face &amp; answer fields):
+            <ul class="about-list">
+              <li><code>/</code> or <code>\n</code> — line break (separator is dropped)</li>
+              <li><code>.</code> <code>,</code> <code>?</code> <code>!</code> <code>。</code> <code>、</code> <code>・</code> <code>？</code> <code>！</code> — line break (kept on the line)</li>
+              <li><code>(text)</code> at the end — small reading under the main text<br>
+                  e.g. <code>猫 (ねこ)</code> shows <b>猫</b> with <i>ねこ</i> beneath it</li>
+              <li>Combine freely: <code>猫/犬 (ねこ/いぬ)</code> → two main lines, two reading lines</li>
+            </ul>
+          </div>
           <div class="footer-note">
             progress stored in localStorage
           </div>
@@ -678,64 +777,376 @@
 </div>
 
 <script>
-const KANA_GROUPS = {
+/* ============================================================
+ *  DECKS — modular content config
+ * ============================================================
+ *  Each top-level key is a "deck" (a study category).
+ *  A deck has:
+ *    label       : human-readable name shown in the picker section header
+ *    tag         : script-tag text shown above the writing canvas
+ *    groups      : { groupName: [ [answer, prompt], ... ] }
+ *                  - answer  = what is revealed (big text on the card)
+ *                  - prompt  = what is shown first (the question)
+ *                  For kana decks: answer = kana char, prompt = romaji.
+ *                  For numbers   : answer = "kanji (reading)", prompt = "5".
+ *                  For vocab     : answer = "日本語 (にほんご)", prompt = "Japanese language".
+ *
+ *  To add new content, just edit the relevant deck's `groups`.
+ *  No other code changes are needed — the picker, scheduler,
+ *  storage, and stats all iterate decks generically.
+ * ============================================================ */
+const DECKS = {
   hira: {
-    "あ row":      [["あ","a"],["い","i"],["う","u"],["え","e"],["お","o"]],
-    "か row":      [["か","ka"],["き","ki"],["く","ku"],["け","ke"],["こ","ko"]],
-    "さ row":      [["さ","sa"],["し","shi"],["す","su"],["せ","se"],["そ","so"]],
-    "た row":      [["た","ta"],["ち","chi"],["つ","tsu"],["て","te"],["と","to"]],
-    "な row":      [["な","na"],["に","ni"],["ぬ","nu"],["ね","ne"],["の","no"]],
-    "は row":      [["は","ha"],["ひ","hi"],["ふ","fu"],["へ","he"],["ほ","ho"]],
-    "ま row":      [["ま","ma"],["み","mi"],["む","mu"],["め","me"],["も","mo"]],
-    "や row":      [["や","ya"],["ゆ","yu"],["よ","yo"]],
-    "ら row":      [["ら","ra"],["り","ri"],["る","ru"],["れ","re"],["ろ","ro"]],
-    "わ row":      [["わ","wa"],["を","wo"],["ん","n"]],
-    "Dakuten":         [["が","ga"],["ぎ","gi"],["ぐ","gu"],["げ","ge"],["ご","go"],
-                        ["ざ","za"],["じ","ji"],["ず","zu"],["ぜ","ze"],["ぞ","zo"],
-                        ["だ","da"],["で","de"],["ど","do"],
-                        ["ば","ba"],["び","bi"],["ぶ","bu"],["べ","be"],["ぼ","bo"]],
-    "Handakuten":      [["ぱ","pa"],["ぴ","pi"],["ぷ","pu"],["ぺ","pe"],["ぽ","po"]],
-    "Yōon":            [["きゃ","kya"],["きゅ","kyu"],["きょ","kyo"],
-                        ["しゃ","sha"],["しゅ","shu"],["しょ","sho"],
-                        ["ちゃ","cha"],["ちゅ","chu"],["ちょ","cho"],
-                        ["にゃ","nya"],["にゅ","nyu"],["にょ","nyo"],
-                        ["ひゃ","hya"],["ひゅ","hyu"],["ひょ","hyo"],
-                        ["みゃ","mya"],["みゅ","myu"],["みょ","myo"],
-                        ["りゃ","rya"],["りゅ","ryu"],["りょ","ryo"]],
-    "Yōon Dakuten":    [["ぎゃ","gya"],["ぎゅ","gyu"],["ぎょ","gyo"],
-                        ["じゃ","ja"], ["じゅ","ju"], ["じょ","jo"],
-                        ["びゃ","bya"],["びゅ","byu"],["びょ","byo"]],
-    "Yōon Handakuten": [["ぴゃ","pya"],["ぴゅ","pyu"],["ぴょ","pyo"]],
+    label: "Hiragana",
+    tag:   "ひらがな · Hiragana",
+    groups: {
+      "あ row":      [["あ","a"],["い","i"],["う","u"],["え","e"],["お","o"]],
+      "か row":      [["か","ka"],["き","ki"],["く","ku"],["け","ke"],["こ","ko"]],
+      "さ row":      [["さ","sa"],["し","shi"],["す","su"],["せ","se"],["そ","so"]],
+      "た row":      [["た","ta"],["ち","chi"],["つ","tsu"],["て","te"],["と","to"]],
+      "な row":      [["な","na"],["に","ni"],["ぬ","nu"],["ね","ne"],["の","no"]],
+      "は row":      [["は","ha"],["ひ","hi"],["ふ","fu"],["へ","he"],["ほ","ho"]],
+      "ま row":      [["ま","ma"],["み","mi"],["む","mu"],["め","me"],["も","mo"]],
+      "や row":      [["や","ya"],["ゆ","yu"],["よ","yo"]],
+      "ら row":      [["ら","ra"],["り","ri"],["る","ru"],["れ","re"],["ろ","ro"]],
+      "わ row":      [["わ","wa"],["を","wo"],["ん","n"]],
+      "Dakuten":         [["が","ga"],["ぎ","gi"],["ぐ","gu"],["げ","ge"],["ご","go"],
+                          ["ざ","za"],["じ","ji"],["ず","zu"],["ぜ","ze"],["ぞ","zo"],
+                          ["だ","da"],["で","de"],["ど","do"],
+                          ["ば","ba"],["び","bi"],["ぶ","bu"],["べ","be"],["ぼ","bo"]],
+      "Handakuten":      [["ぱ","pa"],["ぴ","pi"],["ぷ","pu"],["ぺ","pe"],["ぽ","po"]],
+      "Yōon":            [["きゃ","kya"],["きゅ","kyu"],["きょ","kyo"],
+                          ["しゃ","sha"],["しゅ","shu"],["しょ","sho"],
+                          ["ちゃ","cha"],["ちゅ","chu"],["ちょ","cho"],
+                          ["にゃ","nya"],["にゅ","nyu"],["にょ","nyo"],
+                          ["ひゃ","hya"],["ひゅ","hyu"],["ひょ","hyo"],
+                          ["みゃ","mya"],["みゅ","myu"],["みょ","myo"],
+                          ["りゃ","rya"],["りゅ","ryu"],["りょ","ryo"]],
+      "Yōon Dakuten":    [["ぎゃ","gya"],["ぎゅ","gyu"],["ぎょ","gyo"],
+                          ["じゃ","ja"], ["じゅ","ju"], ["じょ","jo"],
+                          ["びゃ","bya"],["びゅ","byu"],["びょ","byo"]],
+      "Yōon Handakuten": [["ぴゃ","pya"],["ぴゅ","pyu"],["ぴょ","pyo"]],
+    },
   },
   kata: {
-    "ア row":      [["ア","a"],["イ","i"],["ウ","u"],["エ","e"],["オ","o"]],
-    "カ row":      [["カ","ka"],["キ","ki"],["ク","ku"],["ケ","ke"],["コ","ko"]],
-    "サ row":      [["サ","sa"],["シ","shi"],["ス","su"],["セ","se"],["ソ","so"]],
-    "タ row":      [["タ","ta"],["チ","chi"],["ツ","tsu"],["テ","te"],["ト","to"]],
-    "ナ row":      [["ナ","na"],["ニ","ni"],["ヌ","nu"],["ネ","ne"],["ノ","no"]],
-    "ハ row":      [["ハ","ha"],["ヒ","hi"],["フ","fu"],["ヘ","he"],["ホ","ho"]],
-    "マ row":      [["マ","ma"],["ミ","mi"],["ム","mu"],["メ","me"],["モ","mo"]],
-    "ヤ row":      [["ヤ","ya"],["ユ","yu"],["ヨ","yo"]],
-    "ラ row":      [["ラ","ra"],["リ","ri"],["ル","ru"],["レ","re"],["ロ","ro"]],
-    "ワ row":      [["ワ","wa"],["ヲ","wo"],["ン","n"]],
-    "Dakuten":         [["ガ","ga"],["ギ","gi"],["グ","gu"],["ゲ","ge"],["ゴ","go"],
-                        ["ザ","za"],["ジ","ji"],["ズ","zu"],["ゼ","ze"],["ゾ","zo"],
-                        ["ダ","da"],["デ","de"],["ド","do"],
-                        ["バ","ba"],["ビ","bi"],["ブ","bu"],["ベ","be"],["ボ","bo"]],
-    "Handakuten":      [["パ","pa"],["ピ","pi"],["プ","pu"],["ペ","pe"],["ポ","po"]],
-    "Yōon":            [["キャ","kya"],["キュ","kyu"],["キョ","kyo"],
-                        ["シャ","sha"],["シュ","shu"],["ショ","sho"],
-                        ["チャ","cha"],["チュ","chu"],["チョ","cho"],
-                        ["ニャ","nya"],["ニュ","nyu"],["ニョ","nyo"],
-                        ["ヒャ","hya"],["ヒュ","hyu"],["ヒョ","hyo"],
-                        ["ミャ","mya"],["ミュ","myu"],["ミョ","myo"],
-                        ["リャ","rya"],["リュ","ryu"],["リョ","ryo"]],
-    "Yōon Dakuten":    [["ギャ","gya"],["ギュ","gyu"],["ギョ","gyo"],
-                        ["ジャ","ja"], ["ジュ","ju"], ["ジョ","jo"],
-                        ["ビャ","bya"],["ビュ","byu"],["ビョ","byo"]],
-    "Yōon Handakuten": [["ピャ","pya"],["ピュ","pyu"],["ピョ","pyo"]],
-  }
+    label: "Katakana",
+    tag:   "カタカナ · Katakana",
+    groups: {
+      "ア row":      [["ア","a"],["イ","i"],["ウ","u"],["エ","e"],["オ","o"]],
+      "カ row":      [["カ","ka"],["キ","ki"],["ク","ku"],["ケ","ke"],["コ","ko"]],
+      "サ row":      [["サ","sa"],["シ","shi"],["ス","su"],["セ","se"],["ソ","so"]],
+      "タ row":      [["タ","ta"],["チ","chi"],["ツ","tsu"],["テ","te"],["ト","to"]],
+      "ナ row":      [["ナ","na"],["ニ","ni"],["ヌ","nu"],["ネ","ne"],["ノ","no"]],
+      "ハ row":      [["ハ","ha"],["ヒ","hi"],["フ","fu"],["ヘ","he"],["ホ","ho"]],
+      "マ row":      [["マ","ma"],["ミ","mi"],["ム","mu"],["メ","me"],["モ","mo"]],
+      "ヤ row":      [["ヤ","ya"],["ユ","yu"],["ヨ","yo"]],
+      "ラ row":      [["ラ","ra"],["リ","ri"],["ル","ru"],["レ","re"],["ロ","ro"]],
+      "ワ row":      [["ワ","wa"],["ヲ","wo"],["ン","n"]],
+      "Dakuten":         [["ガ","ga"],["ギ","gi"],["グ","gu"],["ゲ","ge"],["ゴ","go"],
+                          ["ザ","za"],["ジ","ji"],["ズ","zu"],["ゼ","ze"],["ゾ","zo"],
+                          ["ダ","da"],["デ","de"],["ド","do"],
+                          ["バ","ba"],["ビ","bi"],["ブ","bu"],["ベ","be"],["ボ","bo"]],
+      "Handakuten":      [["パ","pa"],["ピ","pi"],["プ","pu"],["ペ","pe"],["ポ","po"]],
+      "Yōon":            [["キャ","kya"],["キュ","kyu"],["キョ","kyo"],
+                          ["シャ","sha"],["シュ","shu"],["ショ","sho"],
+                          ["チャ","cha"],["チュ","chu"],["チョ","cho"],
+                          ["ニャ","nya"],["ニュ","nyu"],["ニョ","nyo"],
+                          ["ヒャ","hya"],["ヒュ","hyu"],["ヒョ","hyo"],
+                          ["ミャ","mya"],["ミュ","myu"],["ミョ","myo"],
+                          ["リャ","rya"],["リュ","ryu"],["リョ","ryo"]],
+      "Yōon Dakuten":    [["ギャ","gya"],["ギュ","gyu"],["ギョ","gyo"],
+                          ["ジャ","ja"], ["ジュ","ju"], ["ジョ","jo"],
+                          ["ビャ","bya"],["ビュ","byu"],["ビョ","byo"]],
+      "Yōon Handakuten": [["ピャ","pya"],["ピュ","pyu"],["ピョ","pyo"]],
+    },
+  },
+
+  /* ----------------------------------------------------------
+   * NUMBERS deck
+   * Format per entry:   [ "kanji (reading)", "arabic numeral" ]
+   *   - answer (shown after reveal): "一 (いち)"
+   *   - prompt (shown first):        "1"
+   * ---------------------------------------------------------- */
+  numbers: {
+    label: "Numbers",
+    tag:   "数字 · Numbers",
+    groups: {
+      "1–10":   [["一 (いち)","1"],["二 (に)","2"],["三 (さん)","3"],["四 (し/よん)","4"],["五 (ご)","5"],
+                 ["六 (ろく)","6"],["七 (しち/なな)","7"],["八 (はち)","8"],["九 (く/きゅう)","9"],["十 (じゅう)","10"]],
+      "Tens":   [["二十 (にじゅう)","20"],["三十 (さんじゅう)","30"],["四十 (よんじゅう)","40"],["五十 (ごじゅう)","50"],
+                 ["六十 (ろくじゅう)","60"],["七十 (ななじゅう)","70"],["八十 (はちじゅう)","80"],["九十 (きゅうじゅう)","90"]],
+      "Hundreds":[["百 (ひゃく)","100"],["二百 (にひゃく)","200"],["三百 (さんびゃく)","300"],["六百 (ろっぴゃく)","600"],
+                  ["八百 (はっぴゃく)","800"]],
+      "Big":    [["千 (せん)","1000"],["一万 (いちまん)","10000"],["十万 (じゅうまん)","100000"],["百万 (ひゃくまん)","1000000"]],
+    },
+  },
+
+  /* ----------------------------------------------------------
+   * VOCAB deck  — empty by default.
+   *
+   *  HOW TO ADD VOCAB:
+   *  ----------------
+   *  Inside `groups`, add named groups (chapters, themes, JLPT levels…),
+   *  each with an array of [answer, prompt] pairs.
+   *
+   *    answer = what you want REVEALED on the card (Japanese side).
+   *             Typically:  "日本語 (にほんご)"   — kanji + kana reading.
+   *             Pure-kana words are fine too:  "ねこ"
+   *    prompt = what is shown FIRST (the question side).
+   *             Usually the English meaning:    "cat"
+   *
+   *  Example — uncomment and edit:
+   *
+   *    "Greetings": [
+   *      ["こんにちは",               "hello / good afternoon"],
+   *      ["おはよう (ございます)",     "good morning"],
+   *      ["ありがとう (ございます)",   "thank you"],
+   *    ],
+   *    "N5 — People": [
+   *      ["人 (ひと)",   "person"],
+   *      ["友達 (ともだち)", "friend"],
+   *      ["先生 (せんせい)", "teacher"],
+   *    ],
+   *
+   *  That's it. The picker, scheduler, and stats pick it up automatically.
+   *  Existing progress for unchanged entries is preserved (it is keyed by
+   *  the answer text, e.g. "vocab:こんにちは").
+   * ---------------------------------------------------------- */
+  vocab: {
+    label: "Vocab",
+    tag:   "単語 · Vocabulary",
+    groups: {
+      // Add vocab groups here. See comment above for the format.
+    },
+  },
 };
+
+/* Back-compat alias: some helpers still read the older name. */
+const KANA_GROUPS = Object.fromEntries(
+  Object.entries(DECKS).map(([k, d]) => [k, d.groups])
+);
+
+/* ============================================================
+ *  VOCAB persistence + editor
+ * ============================================================
+ *  vocab.json sits next to Flashcards.html. Shape:
+ *    {
+ *      "categories": {
+ *        "Greetings": [
+ *          { "face": "hello",       "answer": "こんにちは" },
+ *          { "face": "good morning", "answer": "おはよう (ございます)" }
+ *        ],
+ *        "N5 — People": []
+ *      }
+ *    }
+ *  - "face"   = prompt side (shown first; the question)
+ *  - "answer" = revealed side (the big text; usually Japanese)
+ *
+ *  Two storage backends, auto-selected on startup:
+ *    - "server" : reads/writes via the notesapp REST API
+ *                 (GET/PUT ./vocab.json on the same origin)
+ *    - "local"  : everything stays in localStorage; an Export button
+ *                 downloads vocab.json for manual commit later
+ * ============================================================ */
+// Candidate filenames, checked in order. We support a hidden variant
+// (".vocab.json") so the file can be hidden in notesapp's tree while
+// remaining accessible to this app.
+const VOCAB_FILES = ["vocab.json", ".vocab.json"];
+const VOCAB_LOCAL_KEY = "kana-vocab-fallback-v1";
+const EDIT_MODE_KEY = "kana-vocab-edit-mode-v1";
+
+let vocabMode = "local";      // "server" | "local"
+let vocabFile = VOCAB_FILES[0]; // resolved at detect/load time
+let vocabData = { categories: {} };
+let vocabDraft = null;        // working copy while editing; null when not editing
+let editMode = false;
+let saveTimer = null;
+
+function cloneVocab(v) {
+  return JSON.parse(JSON.stringify(v));
+}
+function enterVocabEdit() {
+  vocabDraft = cloneVocab(vocabData);
+}
+function discardVocabEdit() {
+  vocabDraft = null;
+}
+function commitVocabEdit() {
+  if (!vocabDraft) return;
+  vocabData = vocabDraft;
+  vocabDraft = null;
+  mergeVocabIntoDecks();
+  saveVocab({ immediate: true });
+}
+
+function setVocabStatus(text, cls) {
+  const el = document.getElementById("vocabStatus");
+  if (!el) return;
+  el.textContent = text || "";
+  el.className = "vocab-status" + (cls ? " " + cls : "");
+}
+
+async function detectVocabMode() {
+  if (location.protocol === "file:") return "local";
+  // Probe each candidate; the first that exists wins. If none exist but
+  // we get a clean 404, the server is reachable — pick the visible name
+  // (VOCAB_FILES[0]) as the default for future writes.
+  let sawValid404 = false;
+  for (const name of VOCAB_FILES) {
+    try {
+      const r = await fetch("./" + name, { method: "GET", cache: "no-store" });
+      if (r.ok) { vocabFile = name; return "server"; }
+      if (r.status === 404) sawValid404 = true;
+      else if (r.status === 401 || r.status === 403) return "local";
+    } catch {
+      return "local";
+    }
+  }
+  if (sawValid404) { vocabFile = VOCAB_FILES[0]; return "server"; }
+  return "local";
+}
+
+async function loadVocab() {
+  if (vocabMode === "server") {
+    try {
+      const r = await fetch("./" + vocabFile, { method: "GET", cache: "no-store" });
+      if (r.ok) {
+        const json = await r.json();
+        if (json && typeof json === "object" && json.categories && typeof json.categories === "object") {
+          vocabData = { categories: json.categories };
+        } else {
+          vocabData = { categories: {} };
+        }
+      } else if (r.status === 404) {
+        vocabData = { categories: {} };
+      } else {
+        // unexpected status — fall back to local read so we don't lose data
+        loadVocabLocal();
+      }
+    } catch (e) {
+      console.warn("vocab load (server) failed:", e);
+      loadVocabLocal();
+    }
+  } else {
+    loadVocabLocal();
+  }
+  mergeVocabIntoDecks();
+}
+
+function loadVocabLocal() {
+  try {
+    const raw = localStorage.getItem(VOCAB_LOCAL_KEY);
+    if (raw) {
+      const json = JSON.parse(raw);
+      if (json && json.categories && typeof json.categories === "object") {
+        vocabData = { categories: json.categories };
+        return;
+      }
+    }
+  } catch {}
+  vocabData = { categories: {} };
+}
+
+function defaultVocabStatus() {
+  return vocabMode === "server"
+    ? { text: "vocab: server (./" + vocabFile + ")", cls: "ok" }
+    : { text: "vocab: local only", cls: "warn" };
+}
+
+function saveVocab({ immediate = false } = {}) {
+  // Always mirror to localStorage so a server hiccup doesn't lose edits.
+  try { localStorage.setItem(VOCAB_LOCAL_KEY, JSON.stringify(vocabData)); } catch {}
+
+  if (vocabMode !== "server") {
+    setVocabStatus("local only — file unavailable", "warn");
+    return;
+  }
+
+  // Debounce server writes a touch so a burst of edits coalesces.
+  if (saveTimer) clearTimeout(saveTimer);
+  const doSave = async () => {
+    setVocabStatus("saving…");
+    try {
+      const r = await fetch("./" + vocabFile, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(vocabData, null, 2),
+      });
+      if (r.ok) {
+        setVocabStatus("saved ✓", "ok");
+        // Revert to the persistent label after a moment so the UI settles.
+        setTimeout(() => {
+          if (!vocabDraft) {
+            const d = defaultVocabStatus();
+            setVocabStatus(d.text, d.cls);
+          }
+        }, 1500);
+      } else {
+        setVocabStatus("save failed (" + r.status + ")", "err");
+      }
+    } catch (e) {
+      setVocabStatus("save failed (offline?)", "err");
+    }
+  };
+  if (immediate) doSave(); else saveTimer = setTimeout(doSave, 250);
+}
+
+function mergeVocabIntoDecks() {
+  // Convert {face, answer} → [answer, face] to match the existing card shape.
+  const groups = {};
+  for (const [cat, entries] of Object.entries(vocabData.categories || {})) {
+    if (!Array.isArray(entries)) continue;
+    groups[cat] = entries
+      .filter(e => e && typeof e.face === "string" && typeof e.answer === "string" && e.answer.trim() !== "")
+      .map(e => [e.answer, e.face]);
+  }
+  DECKS.vocab.groups = groups;
+  // Keep the back-compat alias in sync.
+  KANA_GROUPS.vocab = groups;
+}
+
+/* --- Mutations (called from the editor UI) ---
+ * These all operate on `vocabDraft`. Changes don't reach disk or DECKS
+ * until commitVocabEdit() (called by Apply). Returns true on success.
+ */
+function _draft() { return vocabDraft || (vocabDraft = cloneVocab(vocabData)); }
+
+function vocabAddCard(category, face, answer) {
+  face = (face || "").trim();
+  answer = (answer || "").trim();
+  if (!category || !face || !answer) return false;
+  const d = _draft();
+  if (!d.categories[category]) d.categories[category] = [];
+  if (d.categories[category].some(e => e.answer === answer)) return false; // dedupe
+  d.categories[category].push({ face, answer });
+  return true;
+}
+
+function vocabUpdateCard(category, index, face, answer) {
+  const d = _draft();
+  const arr = d.categories[category];
+  if (!arr || index < 0 || index >= arr.length) return false;
+  face = (face || "").trim();
+  answer = (answer || "").trim();
+  if (!face || !answer) return false;
+  // Allow a card to keep its own answer; reject collisions with *other* cards.
+  if (arr.some((e, i) => i !== index && e.answer === answer)) return false;
+  arr[index] = { face, answer };
+  return true;
+}
+
+function vocabDeleteCard(category, index) {
+  const d = _draft();
+  const arr = d.categories[category];
+  if (!arr || index < 0 || index >= arr.length) return;
+  arr.splice(index, 1);
+}
+
+function vocabDeleteCategory(category) {
+  const d = _draft();
+  if (!(category in d.categories)) return;
+  delete d.categories[category];
+}
 
 const STORAGE_KEY = "kana-flashcards-v1";
 const SELECTION_KEY = "kana-flashcards-selection-v1";
@@ -940,40 +1351,69 @@ function updateStats() {
 let stagedGroups = {};
 
 function updateSelectedSummary() {
-  let hiraCount = 0, kataCount = 0, charCount = 0;
+  // Per-deck group counts, plus a total unique-card count.
+  const perDeck = {};                    // deckKey -> selected-group count
   const seen = new Set();
-  for (const [script, groups] of Object.entries(KANA_GROUPS)) {
-    for (const [groupName, list] of Object.entries(groups)) {
-      const selKey = script + ":" + groupName;
+  let total = 0;
+  for (const [deckKey, deck] of Object.entries(DECKS)) {
+    perDeck[deckKey] = 0;
+    for (const [groupName, list] of Object.entries(deck.groups)) {
+      const selKey = deckKey + ":" + groupName;
       if (!selectedGroups[selKey]) continue;
-      if (script === "hira") hiraCount++; else kataCount++;
-      for (const [kana] of list) {
-        const k = script + ":" + kana;
-        if (!seen.has(k)) { seen.add(k); charCount++; }
+      perDeck[deckKey]++;
+      for (const [answer] of list) {
+        const k = deckKey + ":" + answer;
+        if (!seen.has(k)) { seen.add(k); total++; }
       }
     }
   }
   const parts = [];
-  if (hiraCount) parts.push(hiraCount + " hiragana group" + (hiraCount === 1 ? "" : "s"));
-  if (kataCount) parts.push(kataCount + " katakana group" + (kataCount === 1 ? "" : "s"));
+  for (const [deckKey, count] of Object.entries(perDeck)) {
+    if (!count) continue;
+    const name = DECKS[deckKey].label.toLowerCase();
+    parts.push(count + " " + name + " group" + (count === 1 ? "" : "s"));
+  }
   const el = document.getElementById("selectedSummary");
-  el.textContent = parts.length ? parts.join(", ") + " — " + charCount + " chars" : "(none)";
+  el.textContent = parts.length ? parts.join(", ") + " — " + total + " cards" : "(none)";
 }
 
 function renderSetList() {
   const container = document.getElementById("setList");
   container.innerHTML = "";
-  const labels = { hira: "Hiragana", kata: "Katakana" };
-  for (const script of ["hira", "kata"]) {
+  for (const [deckKey, deck] of Object.entries(DECKS)) {
     const header = document.createElement("div");
     header.className = "set-group-header";
-    header.textContent = labels[script];
+    header.textContent = deck.label;
     container.appendChild(header);
+
+    // Inline vocab editor (only on the vocab deck, only when edit mode is on).
+    if (deckKey === "vocab" && editMode) {
+      container.appendChild(renderVocabEditor());
+    }
+
+    const groupNames = Object.keys(deck.groups);
+    if (!groupNames.length) {
+      const empty = document.createElement("div");
+      empty.className = "empty";
+      empty.style.padding = "6px 4px";
+      empty.style.textAlign = "left";
+      if (deckKey === "vocab") {
+        empty.textContent = editMode
+          ? "(no vocab yet — add some using the form above)"
+          : "(no vocab yet — toggle “✎ Edit vocab” next to Reset progress to add some)";
+      } else {
+        empty.textContent =
+          "(no " + deck.label.toLowerCase() + " groups yet — open Flashcards.html and edit the `" +
+          deckKey + "` deck in the DECKS config to add some)";
+      }
+      container.appendChild(empty);
+      continue;
+    }
 
     const grid = document.createElement("div");
     grid.className = "sets";
-    for (const groupName of Object.keys(KANA_GROUPS[script])) {
-      const selKey = script + ":" + groupName;
+    for (const groupName of groupNames) {
+      const selKey = deckKey + ":" + groupName;
       const lbl = document.createElement("label");
       lbl.className = "set-btn" + (stagedGroups[selKey] ? " active" : "");
       lbl.innerHTML = `<input type="checkbox" ${stagedGroups[selKey] ? "checked" : ""}> <span>${groupName}</span>`;
@@ -989,6 +1429,246 @@ function renderSetList() {
   }
 }
 
+/* ---------- Vocab editor UI ----------
+ * All reads/writes go through `vocabDraft` (a working copy). Apply commits
+ * it to `vocabData` and saves. Cancel discards.
+ */
+function renderVocabEditor() {
+  if (!vocabDraft) enterVocabEdit();
+  const src = vocabDraft;
+
+  const wrap = document.createElement("div");
+  wrap.className = "vocab-editor";
+
+  const cats = Object.keys(src.categories);
+
+  // --- Add row ---
+  const addRow = document.createElement("div");
+  addRow.className = "ve-row";
+  const catSelect = document.createElement("select");
+  catSelect.className = "cat";
+  for (const c of cats) {
+    const o = document.createElement("option");
+    o.value = c; o.textContent = c;
+    catSelect.appendChild(o);
+  }
+  const newOpt = document.createElement("option");
+  newOpt.value = "__new__"; newOpt.textContent = "+ new category…";
+  catSelect.appendChild(newOpt);
+
+  const newCatInput = document.createElement("input");
+  newCatInput.className = "newcat";
+  newCatInput.placeholder = "new category name";
+  newCatInput.style.display = "none";
+
+  const faceInput = document.createElement("input");
+  faceInput.className = "face";
+  faceInput.placeholder = "face / prompt (e.g. hello)";
+
+  const answerInput = document.createElement("input");
+  answerInput.className = "answer";
+  answerInput.placeholder = "answer (e.g. こんにちは)";
+
+  const addBtn = document.createElement("button");
+  addBtn.type = "button";
+  addBtn.className = "ph-btn primary";
+  addBtn.textContent = "Add";
+
+  catSelect.addEventListener("change", () => {
+    newCatInput.style.display = catSelect.value === "__new__" ? "" : "none";
+    if (catSelect.value === "__new__") newCatInput.focus();
+  });
+
+  // If there are no categories yet, force the new-category path.
+  if (cats.length === 0) {
+    catSelect.value = "__new__";
+    newCatInput.style.display = "";
+  }
+
+  const submit = () => {
+    let cat = catSelect.value;
+    if (cat === "__new__") {
+      cat = newCatInput.value.trim();
+      if (!cat) { newCatInput.focus(); return; }
+    }
+    const face = faceInput.value.trim();
+    const answer = answerInput.value.trim();
+    if (!face || !answer) {
+      (face ? answerInput : faceInput).focus();
+      return;
+    }
+    const ok = vocabAddCard(cat, face, answer);
+    if (!ok) {
+      setVocabStatus("duplicate, skipped", "warn");
+      return;
+    }
+    faceInput.value = "";
+    answerInput.value = "";
+    setVocabStatus("draft (apply to save)", "warn");
+    renderSetList();
+    setTimeout(() => {
+      const newFace = document.querySelector(".vocab-editor input.face");
+      if (newFace) newFace.focus();
+    }, 0);
+  };
+
+  addBtn.addEventListener("click", submit);
+  [faceInput, answerInput, newCatInput].forEach(inp => {
+    inp.addEventListener("keydown", e => {
+      if (e.key === "Enter") { e.preventDefault(); submit(); }
+    });
+  });
+
+  addRow.appendChild(catSelect);
+  addRow.appendChild(newCatInput);
+  addRow.appendChild(faceInput);
+  addRow.appendChild(answerInput);
+  addRow.appendChild(addBtn);
+  wrap.appendChild(addRow);
+
+  // --- Tools row (export + mode label) ---
+  const toolsRow = document.createElement("div");
+  toolsRow.className = "ve-row";
+  const exportBtn = document.createElement("button");
+  exportBtn.type = "button";
+  exportBtn.className = "ph-btn mini";
+  exportBtn.textContent = "Export vocab.json";
+  exportBtn.title = "Download a copy of the current draft as vocab.json";
+  exportBtn.addEventListener("click", () => {
+    // Export reflects the live draft so the user can grab work-in-progress.
+    const data = vocabDraft || vocabData;
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    // Export to the visible filename so users can re-upload cleanly.
+    a.href = url; a.download = VOCAB_FILES[0];
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  });
+  toolsRow.appendChild(exportBtn);
+  const modeLabel = document.createElement("span");
+  modeLabel.style.cssText = "font-size:10px;color:#777;font-style:italic;";
+  modeLabel.textContent =
+    "Changes apply on Apply. " +
+    (vocabMode === "server"
+      ? "Mode: server (./" + vocabFile + ")"
+      : "Mode: local (localStorage only — use Export to commit)");
+  toolsRow.appendChild(modeLabel);
+  wrap.appendChild(toolsRow);
+
+  // --- Existing cards, grouped by category (editable) ---
+  const list = document.createElement("div");
+  list.className = "ve-cards";
+  if (cats.length === 0) {
+    const empty = document.createElement("div");
+    empty.className = "ve-empty";
+    empty.textContent = "No categories yet. Add your first card above.";
+    list.appendChild(empty);
+  } else {
+    for (const cat of cats) {
+      const catHeader = document.createElement("div");
+      catHeader.className = "ve-cat-header";
+      const name = document.createElement("span");
+      name.className = "ve-cat-name";
+      const entries = src.categories[cat] || [];
+      name.textContent = cat + " (" + entries.length + ")";
+      catHeader.appendChild(name);
+      const delCatBtn = document.createElement("button");
+      delCatBtn.type = "button";
+      delCatBtn.className = "ph-btn danger mini";
+      delCatBtn.title = "Delete this whole category";
+      delCatBtn.innerHTML = trashIconSvg() + " category";
+      delCatBtn.addEventListener("click", () => {
+        const n = entries.length;
+        const msg = n
+          ? `Delete category "${cat}" and its ${n} card${n === 1 ? "" : "s"}? (applies on Apply)`
+          : `Delete empty category "${cat}"?`;
+        if (!confirm(msg)) return;
+        vocabDeleteCategory(cat);
+        setVocabStatus("draft (apply to save)", "warn");
+        renderSetList();
+      });
+      catHeader.appendChild(delCatBtn);
+      list.appendChild(catHeader);
+
+      if (entries.length === 0) {
+        const empty = document.createElement("div");
+        empty.className = "ve-empty";
+        empty.textContent = "  (empty)";
+        list.appendChild(empty);
+      } else {
+        entries.forEach((entry, idx) => {
+          const row = document.createElement("div");
+          row.className = "ve-card";
+
+          const fInput = document.createElement("input");
+          fInput.className = "face";
+          fInput.value = entry.face;
+          fInput.title = "Face / prompt";
+
+          const ar = document.createElement("span");
+          ar.className = "arrow";
+          ar.textContent = "→";
+
+          const aInput = document.createElement("input");
+          aInput.className = "answer";
+          aInput.value = entry.answer;
+          aInput.title = "Answer (kanji optionally followed by (reading))";
+
+          const commitInline = () => {
+            const ok = vocabUpdateCard(cat, idx, fInput.value, aInput.value);
+            if (!ok) {
+              // Revert visible value if duplicate-against-other or empty.
+              const cur = (vocabDraft.categories[cat] || [])[idx];
+              if (cur) { fInput.value = cur.face; aInput.value = cur.answer; }
+              setVocabStatus("invalid / duplicate, reverted", "warn");
+            } else {
+              setVocabStatus("draft (apply to save)", "warn");
+            }
+          };
+          // Update on blur (commit when focus leaves), or Enter.
+          [fInput, aInput].forEach(inp => {
+            inp.addEventListener("blur", commitInline);
+            inp.addEventListener("keydown", e => {
+              if (e.key === "Enter") { e.preventDefault(); inp.blur(); }
+            });
+          });
+
+          const del = document.createElement("button");
+          del.type = "button";
+          del.className = "ph-btn danger mini";
+          del.title = "Delete this card (applies on Apply)";
+          del.innerHTML = trashIconSvg();
+          del.addEventListener("click", () => {
+            vocabDeleteCard(cat, idx);
+            setVocabStatus("draft (apply to save)", "warn");
+            renderSetList();
+          });
+
+          row.appendChild(fInput);
+          row.appendChild(ar);
+          row.appendChild(aInput);
+          row.appendChild(del);
+          list.appendChild(row);
+        });
+      }
+    }
+  }
+  wrap.appendChild(list);
+  return wrap;
+}
+
+function trashIconSvg() {
+  return `<svg class="icon-trash" viewBox="0 0 10 11" aria-hidden="true">
+    <rect x="0" y="2" width="10" height="1.2" fill="currentColor"/>
+    <rect x="3.5" y="0.5" width="3" height="1.2" fill="none" stroke="currentColor" stroke-width="0.8"/>
+    <path d="M1.2,3.5 L1.7,10.5 L8.3,10.5 L8.8,3.5 Z" fill="none" stroke="currentColor" stroke-width="0.8" stroke-linejoin="miter"/>
+    <line x1="3.7" y1="4.8" x2="3.7" y2="9.2" stroke="currentColor" stroke-width="0.7"/>
+    <line x1="5.0" y1="4.8" x2="5.0" y2="9.2" stroke="currentColor" stroke-width="0.7"/>
+    <line x1="6.3" y1="4.8" x2="6.3" y2="9.2" stroke="currentColor" stroke-width="0.7"/>
+  </svg>`;
+}
+
 function openSetModal() {
   stagedGroups = { ...selectedGroups };
   renderSetList();
@@ -998,19 +1678,54 @@ function openSetModal() {
 }
 function closeSetModal() {
   document.getElementById("modal").classList.add("hidden");
+  // Cancelling the picker discards any in-progress vocab edits and leaves
+  // edit mode — consistent with closing a modal meaning "throw away".
+  if (editMode || vocabDraft) {
+    discardVocabEdit();
+    editMode = false;
+    try { localStorage.setItem(EDIT_MODE_KEY, "0"); } catch {}
+    applyEditModeButton();
+    const d = defaultVocabStatus();
+    setVocabStatus(d.text, d.cls);
+  }
 }
 function applySetModal() {
   if (Object.keys(stagedGroups).length === 0) {
     alert("Pick at least one group.");
     return;
   }
+  // Commit vocab draft first (so the new groups exist before we read them).
+  if (vocabDraft) commitVocabEdit();
+
+  // Drop any selected vocab groups that no longer exist after the commit.
+  for (const key of Object.keys(stagedGroups)) {
+    if (!key.startsWith("vocab:")) continue;
+    const groupName = key.slice("vocab:".length);
+    if (!DECKS.vocab.groups[groupName]) delete stagedGroups[key];
+  }
+  // Re-check at least one group exists.
+  if (Object.keys(stagedGroups).length === 0) {
+    alert("Pick at least one group.");
+    return;
+  }
+
   selectedGroups = { ...stagedGroups };
   saveSelection();
   ensureCardsExist();
   showNext();
   updateStats();
   updateSelectedSummary();
-  closeSetModal();
+
+  // Leave vocab edit mode automatically.
+  if (editMode) {
+    editMode = false;
+    try { localStorage.setItem(EDIT_MODE_KEY, "0"); } catch {}
+    applyEditModeButton();
+  }
+
+  // Close after we've handled state — closeSetModal would also wipe draft,
+  // but draft is null now after commit, so it's fine.
+  document.getElementById("modal").classList.add("hidden");
 }
 
 const BASIC_HIRA_GROUPS = ["あ row","か row","さ row","た row","な row","は row","ま row","や row","ら row","わ row"];
@@ -1056,6 +1771,166 @@ function stageNone() {
   stagedGroups = {};
   renderSetList();
 }
+function stageNumbers() {
+  stagedGroups = {};
+  for (const g of Object.keys(DECKS.numbers.groups)) stagedGroups["numbers:" + g] = true;
+  renderSetList();
+}
+
+/* ============================================================
+ *  Card rendering: line-breaking + dynamic font fit
+ * ============================================================
+ *  - Prompt (face / romaji side) can be plain text; we split on
+ *    sentence-ending punctuation (./。) into separate lines.
+ *  - Answer (kana side) may have a trailing "(reading)" — we render
+ *    the main form big and the reading smaller below it. Sentence
+ *    punctuation also forces line breaks.
+ *  - After populating, fitText() shrinks the inline font-size until
+ *    the content fits inside .card-stage without horizontal overflow.
+ * ============================================================ */
+
+// Split on any sentence/clause punctuation, keeping the punctuation on
+// the line it ended. Covers ASCII and Japanese variants:
+//   .  ,  /  ?  !     ←  ASCII
+//   。  、  ・  ？  ！  ←  Japanese
+function splitSentences(text) {
+  if (text == null) return [];
+  const s = String(text);
+  // First hard-break on \n (stripped), then split each piece on punctuation.
+  const out = [];
+  for (const part of s.split(/\n/)) {
+    const matches = part.match(/[^.,\/?!。、・？！]*[.,\/?!。、・？！]?/g) || [];
+    for (const m of matches) {
+      const t = m.replace(/\//g, "").trim();
+      if (t) out.push(t);
+    }
+  }
+  return out;
+}
+
+// Parse an answer string. Returns { main: [lines], reading: [lines] | null }.
+// "三百 (さんびゃく)" → { main: ["三百"], reading: ["さんびゃく"] }
+// "こんにちは"       → { main: ["こんにちは"], reading: null }
+// "今日は. 元気?"    → { main: ["今日は.", "元気?"], reading: null }
+function parseAnswer(text) {
+  const s = String(text || "").trim();
+  // Trailing parenthesized reading: "<main> (<reading>)".
+  // [\s\S] (instead of `.`) so multi-line readings work too — readings
+  // may contain `\n` (we use that to render multiple readings stacked).
+  const m = s.match(/^([\s\S]*?)\s*[(（]([\s\S]+)[)）]\s*$/);
+  if (m) {
+    return { main: splitSentences(m[1]), reading: splitSentences(m[2]) };
+  }
+  return { main: splitSentences(s), reading: null };
+}
+
+function renderPromptInto(el, text) {
+  const lines = splitSentences(text);
+  el.innerHTML = "";
+  if (lines.length === 0) {
+    const span = document.createElement("span");
+    span.className = "line";
+    span.textContent = "—";
+    el.appendChild(span);
+    return;
+  }
+  for (const ln of lines) {
+    const span = document.createElement("span");
+    span.className = "line";
+    span.textContent = ln;
+    el.appendChild(span);
+  }
+}
+
+function renderAnswerInto(el, text) {
+  const parsed = parseAnswer(text);
+  el.innerHTML = "";
+  for (const ln of parsed.main) {
+    const span = document.createElement("span");
+    span.className = "line kana-main";
+    span.textContent = ln;
+    el.appendChild(span);
+  }
+  if (parsed.reading) {
+    for (const ln of parsed.reading) {
+      const span = document.createElement("span");
+      span.className = "line kana-reading";
+      span.textContent = ln;
+      el.appendChild(span);
+    }
+  }
+}
+
+// Shrink an element's font-size until its content fits within the stage's
+// content box. .line children start as `white-space: nowrap` so we shrink
+// instead of wrapping. If we hit the floor and still don't fit, we then
+// allow the offending lines to wrap — but only at spaces, never mid-word.
+function fitText(el, opts = {}) {
+  if (!el) return;
+  const stage = el.closest(".card-stage") || el.parentElement;
+  if (!stage) return;
+
+  // Reset wrap state and font size each call so re-fits start from scratch.
+  el.style.fontSize = "";
+  for (const ln of el.querySelectorAll(".line")) {
+    ln.style.whiteSpace = "";
+    ln.style.overflowWrap = "";
+    ln.style.wordBreak = "";
+  }
+
+  const cs = window.getComputedStyle(el);
+  const ceiling = parseFloat(cs.fontSize) || 48;
+  const minPx = opts.min || 18;   // floor: below this, we wrap instead of shrinking further.
+
+  // Width budget: the stage's content-box width minus a small breathing margin.
+  const stageCS = window.getComputedStyle(stage);
+  const padL = parseFloat(stageCS.paddingLeft)  || 0;
+  const padR = parseFloat(stageCS.paddingRight) || 0;
+  const innerW = stage.clientWidth - padL - padR;
+  const maxW = Math.max(40, innerW - 8);
+
+  // Height budget: caller-provided, else half the stage.
+  const stageH = stage.clientHeight;
+  const maxH = Math.max(40, opts.maxHeight || stageH * 0.5);
+
+  const fits = (px) => {
+    el.style.fontSize = px + "px";
+    return el.scrollWidth <= maxW && el.scrollHeight <= maxH;
+  };
+
+  // Phase 1: shrink-to-fit between floor and ceiling.
+  if (fits(ceiling)) { el.style.fontSize = ceiling + "px"; return; }
+
+  let lo = minPx, hi = ceiling, best = null;
+  for (let i = 0; i < 20; i++) {
+    const mid = (lo + hi) / 2;
+    if (fits(mid)) { best = mid; lo = mid; }
+    else           { hi = mid; }
+    if (hi - lo < 0.5) break;
+  }
+  if (best !== null) { el.style.fontSize = best + "px"; return; }
+
+  // Phase 2: even at the floor it doesn't fit. Pin at the floor and let
+  // lines wrap at spaces only (never mid-word / mid-character).
+  el.style.fontSize = minPx + "px";
+  for (const ln of el.querySelectorAll(".line")) {
+    ln.style.whiteSpace = "normal";
+    ln.style.overflowWrap = "normal";
+    ln.style.wordBreak = "keep-all";
+  }
+}
+
+function fitCardText() {
+  const romajiEl = document.getElementById("romaji");
+  const kanaEl   = document.getElementById("kana");
+  // The two elements share the stage; budget vertical space between them.
+  // If kana is hidden (pre-reveal), the prompt gets most of the height.
+  const kanaVisible = !kanaEl.classList.contains("hidden");
+  const stage = document.querySelector(".card-stage");
+  const stageH = stage ? stage.getBoundingClientRect().height : 240;
+  fitText(romajiEl, { maxHeight: stageH * (kanaVisible ? 0.30 : 0.65) });
+  if (kanaVisible) fitText(kanaEl, { maxHeight: stageH * 0.62 });
+}
 
 function showNext() {
   ensureCardsExist();
@@ -1071,28 +1946,34 @@ function showNext() {
   const scriptTagEl = document.getElementById("scriptTag");
 
   if (!currentKey) {
-    romajiEl.textContent = "—";
+    renderPromptInto(romajiEl, "—");
     romajiEl.classList.remove("hidden");
     kanaEl.classList.add("hidden");
     scriptTagEl.classList.add("hidden");
     emptyEl.style.display = "block";
     showBtn.classList.add("hidden");
     answerBtns.classList.add("hidden");
+    fitCardText();
     return;
   }
 
   const [script, kana] = currentKey.split(":");
-  const base = script === "hira" ? "ひらがな · Hiragana" : "カタカナ · Katakana";
-  scriptTagEl.textContent = base + " · " + romajiFor(currentKey);
+  const base = (DECKS[script] && DECKS[script].tag) || script;
+  // Script tag preview: trim a long prompt so the tag itself doesn't bloat.
+  const tagPrompt = romajiFor(currentKey).length > 18
+    ? romajiFor(currentKey).slice(0, 16) + "…"
+    : romajiFor(currentKey);
+  scriptTagEl.textContent = base + " · " + tagPrompt;
   scriptTagEl.classList.remove("hidden");
-  romajiEl.textContent = romajiFor(currentKey);
+  renderPromptInto(romajiEl, romajiFor(currentKey));
   romajiEl.classList.remove("hidden");
-  kanaEl.textContent = kana;
+  renderAnswerInto(kanaEl, kana);
   kanaEl.classList.add("hidden");
   emptyEl.style.display = "none";
   showBtn.classList.remove("hidden");
   answerBtns.classList.add("hidden");
   updateStats();
+  fitCardText();
 }
 
 function reveal() {
@@ -1101,6 +1982,7 @@ function reveal() {
   document.getElementById("kana").classList.remove("hidden");
   document.getElementById("showBtn").classList.add("hidden");
   document.getElementById("answerBtns").classList.remove("hidden");
+  fitCardText();
 
   const prev = previewGrades(cards[currentKey]);
   document.getElementById("i-again").textContent = prev.again.label;
@@ -1174,10 +2056,11 @@ document.getElementById("selBasicKata").onclick = stageBasicKata;
 document.getElementById("selYoonHira").onclick = stageYoonHira;
 document.getElementById("selYoonKata").onclick = stageYoonKata;
 document.getElementById("selDakuten").onclick = stageDakuten;
+document.getElementById("selNumbers").onclick = stageNumbers;
 document.getElementById("selNone").onclick = stageNone;
 
 document.addEventListener("keydown", e => {
-  if (e.target.tagName === "INPUT") return;
+  if (e.target.tagName === "INPUT" || e.target.tagName === "SELECT" || e.target.tagName === "TEXTAREA") return;
   if (e.key === "Escape" && !document.getElementById("modal").classList.contains("hidden")) {
     closeSetModal();
     return;
@@ -1205,7 +2088,7 @@ document.addEventListener("keydown", e => {
 const drawCanvas = document.getElementById("drawCanvas");
 const drawCtx = drawCanvas.getContext("2d");
 
-const CHALK_RADIUS = 5.6;   // average half-width of the chalk line
+const CHALK_RADIUS = 5.32;  // average half-width of the chalk line
 const CHALK_DENSITY = 3.0;  // stamps per pixel along the segment
 const CHALK_GRAINS = 14;    // dust particles per stamp
 const CHALK_COLORS = [
@@ -1319,12 +2202,61 @@ drawCanvas.addEventListener("touchmove", drawMove);
 drawCanvas.addEventListener("touchend", drawEnd);
 document.getElementById("clearDrawBtn").addEventListener("click", clearDraw);
 
-loadCards();
-loadSelection();
-ensureCardsExist();
-showNext();
-updateStats();
-updateSelectedSummary();
+// Re-fit card text when the window/iframe is resized.
+let _fitRaf = 0;
+window.addEventListener("resize", () => {
+  if (_fitRaf) cancelAnimationFrame(_fitRaf);
+  _fitRaf = requestAnimationFrame(fitCardText);
+});
+
+// Edit-mode toggle (next to Reset progress)
+function applyEditModeButton() {
+  const btn = document.getElementById("editVocabBtn");
+  if (!btn) return;
+  btn.textContent = editMode ? "✓ Editing vocab" : "✎ Edit vocab";
+  btn.classList.toggle("primary", editMode);
+}
+document.getElementById("editVocabBtn").addEventListener("click", () => {
+  editMode = !editMode;
+  try { localStorage.setItem(EDIT_MODE_KEY, editMode ? "1" : "0"); } catch {}
+  applyEditModeButton();
+  if (editMode) {
+    enterVocabEdit();
+    setVocabStatus("draft (apply to save)", "warn");
+  } else {
+    // Toggled off without going through Apply — discard the draft.
+    discardVocabEdit();
+    const d = defaultVocabStatus();
+    setVocabStatus(d.text, d.cls);
+  }
+  // If the modal is open, re-render so the editor appears/disappears immediately.
+  if (!document.getElementById("modal").classList.contains("hidden")) {
+    renderSetList();
+  } else if (editMode) {
+    // Convenience: opening edit mode also pops the picker so the editor is visible.
+    openSetModal();
+  }
+});
+
+// Initial editor-mode state from localStorage.
+try { editMode = localStorage.getItem(EDIT_MODE_KEY) === "1"; } catch {}
+applyEditModeButton();
+
+(async function bootstrap() {
+  // Order matters: detect storage mode → load vocab → merge into DECKS →
+  // then do the regular card-state init that depends on the deck contents.
+  vocabMode = await detectVocabMode();
+  await loadVocab();          // populates DECKS.vocab.groups
+  const d = defaultVocabStatus();
+  setVocabStatus(d.text, d.cls);
+
+  loadCards();
+  loadSelection();
+  ensureCardsExist();
+  showNext();
+  updateStats();
+  updateSelectedSummary();
+})();
 </script>
 <script defer src="https://static.cloudflareinsights.com/beacon.min.js/v833ccba57c9e4d2798f2e76cebdd09a11778172276447" integrity="sha512-57MDmcccJXYtNnH+ZiBwzC4jb2rvgVCEokYN+L/nLlmO8rfYT/gIpW2A569iJ/3b+0UEasghjuZH/ma3wIs/EQ==" data-cf-beacon='{"version":"2024.11.0","token":"9fd116037c034d6eaa14738130fb2cf2","r":1,"server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
 </body>
