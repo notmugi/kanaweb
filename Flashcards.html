@@ -252,7 +252,21 @@
   }
   /* Each visual line stays on one line — fitText() shrinks the font instead
      of letting the browser wrap, so we never get awkward mid-word breaks. */
-  .romaji .line { display: block; white-space: nowrap; }
+  .romaji .line       { display: block; white-space: nowrap; }
+  .romaji .romaji-main { display: block; }
+  /* Reading line on the prompt side — same behavior as .kana-reading but
+     coloured to match the prompt. */
+  .romaji .romaji-reading {
+    display: block;
+    font-size: 0.5em;       /* relative to current .romaji font-size */
+    font-style: normal;
+    font-weight: normal;
+    color: #5a7a9a;
+    opacity: 0.85;
+    text-shadow: 1px 1px 0 rgba(255,255,255,0.6);
+    letter-spacing: 0.04em;
+    margin-top: -0.05em;
+  }
   .kana {
     font-family: "Hiragino Sans", "Yu Gothic", "Noto Sans JP", "MS Mincho", serif;
     /* font-size is set dynamically by fitText(); this is the ceiling. */
@@ -961,6 +975,9 @@ let vocabData = { categories: {} };
 let vocabDraft = null;        // working copy while editing; null when not editing
 let editMode = false;
 let saveTimer = null;
+// Sticky form state for the add-card row — preserved across re-renders so
+// the category doesn't reset every time you add an entry.
+let vocabFormState = { category: null, newCategoryName: "" };
 
 function cloneVocab(v) {
   return JSON.parse(JSON.stringify(v));
@@ -970,6 +987,7 @@ function enterVocabEdit() {
 }
 function discardVocabEdit() {
   vocabDraft = null;
+  vocabFormState = { category: null, newCategoryName: "" };
 }
 function commitVocabEdit() {
   if (!vocabDraft) return;
@@ -977,6 +995,7 @@ function commitVocabEdit() {
   vocabDraft = null;
   mergeVocabIntoDecks();
   saveVocab({ immediate: true });
+  vocabFormState = { category: null, newCategoryName: "" };
 }
 
 function setVocabStatus(text, cls) {
@@ -1477,12 +1496,28 @@ function renderVocabEditor() {
   catSelect.addEventListener("change", () => {
     newCatInput.style.display = catSelect.value === "__new__" ? "" : "none";
     if (catSelect.value === "__new__") newCatInput.focus();
+    vocabFormState.category = catSelect.value;
+  });
+  newCatInput.addEventListener("input", () => {
+    vocabFormState.newCategoryName = newCatInput.value;
   });
 
-  // If there are no categories yet, force the new-category path.
-  if (cats.length === 0) {
+  // Restore prior form state across re-renders so the user doesn't lose
+  // their selected category when adding a card, deleting, etc.
+  const prior = vocabFormState.category;
+  if (prior && (prior === "__new__" || cats.includes(prior))) {
+    catSelect.value = prior;
+  } else if (cats.length > 0) {
+    catSelect.value = cats[0];
+    vocabFormState.category = cats[0];
+  } else {
+    // No categories yet — force the new-category path.
     catSelect.value = "__new__";
+    vocabFormState.category = "__new__";
+  }
+  if (catSelect.value === "__new__") {
     newCatInput.style.display = "";
+    newCatInput.value = vocabFormState.newCategoryName || "";
   }
 
   const submit = () => {
@@ -1502,6 +1537,11 @@ function renderVocabEditor() {
       setVocabStatus("duplicate, skipped", "warn");
       return;
     }
+    // Stick to the category we just added into. If it was a new one, switch
+    // selection from "__new__" to the actual category so subsequent adds
+    // drop into the same bucket without re-typing the name.
+    vocabFormState.category = cat;
+    vocabFormState.newCategoryName = "";
     faceInput.value = "";
     answerInput.value = "";
     setVocabStatus("draft (apply to save)", "warn");
@@ -1824,41 +1864,41 @@ function parseAnswer(text) {
   return { main: splitSentences(s), reading: null };
 }
 
-function renderPromptInto(el, text) {
-  const lines = splitSentences(text);
+// Render parsed {main, reading} into `el` using the given line-class names.
+// Both prompt and answer sides share this so formatting (parens for readings,
+// line-break separators) works identically on either side.
+function renderParsedInto(el, text, mainCls, readingCls, fallback) {
+  const parsed = parseAnswer(text);
   el.innerHTML = "";
-  if (lines.length === 0) {
+  if (parsed.main.length === 0 && !parsed.reading) {
     const span = document.createElement("span");
     span.className = "line";
-    span.textContent = "—";
+    span.textContent = fallback || "";
     el.appendChild(span);
     return;
   }
-  for (const ln of lines) {
-    const span = document.createElement("span");
-    span.className = "line";
-    span.textContent = ln;
-    el.appendChild(span);
-  }
-}
-
-function renderAnswerInto(el, text) {
-  const parsed = parseAnswer(text);
-  el.innerHTML = "";
   for (const ln of parsed.main) {
     const span = document.createElement("span");
-    span.className = "line kana-main";
+    span.className = "line " + mainCls;
     span.textContent = ln;
     el.appendChild(span);
   }
   if (parsed.reading) {
     for (const ln of parsed.reading) {
       const span = document.createElement("span");
-      span.className = "line kana-reading";
+      span.className = "line " + readingCls;
       span.textContent = ln;
       el.appendChild(span);
     }
   }
+}
+
+function renderPromptInto(el, text) {
+  renderParsedInto(el, text, "romaji-main", "romaji-reading", "—");
+}
+
+function renderAnswerInto(el, text) {
+  renderParsedInto(el, text, "kana-main", "kana-reading", "");
 }
 
 // Shrink an element's font-size until its content fits within the stage's
