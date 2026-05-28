@@ -772,11 +772,10 @@
           <div class="about-body" style="margin-top:8px;">
             <b>Card formatting</b> (face &amp; answer fields):
             <ul class="about-list">
-              <li><code>/</code> or <code>\n</code> — line break (separator is dropped)</li>
-              <li><code>.</code> <code>,</code> <code>?</code> <code>!</code> <code>。</code> <code>、</code> <code>・</code> <code>？</code> <code>！</code> — line break (kept on the line)</li>
+              <li><code>\</code> — line break (separator is dropped); the only auto-wrap character</li>
               <li><code>(text)</code> at the end — small reading under the main text<br>
                   e.g. <code>猫 (ねこ)</code> shows <b>猫</b> with <i>ねこ</i> beneath it</li>
-              <li>Combine freely: <code>猫/犬 (ねこ/いぬ)</code> → two main lines, two reading lines</li>
+              <li>Combine freely: <code>猫\犬 (ねこ\いぬ)</code> → two main lines, two reading lines</li>
             </ul>
           </div>
           <div class="footer-note">
@@ -885,8 +884,8 @@ const DECKS = {
     label: "Numbers",
     tag:   "数字 · Numbers",
     groups: {
-      "1–10":   [["一 (いち)","1"],["二 (に)","2"],["三 (さん)","3"],["四 (し/よん)","4"],["五 (ご)","5"],
-                 ["六 (ろく)","6"],["七 (しち/なな)","7"],["八 (はち)","8"],["九 (く/きゅう)","9"],["十 (じゅう)","10"]],
+      "1–10":   [["一 (いち)","1"],["二 (に)","2"],["三 (さん)","3"],["四 (し\\よん)","4"],["五 (ご)","5"],
+                 ["六 (ろく)","6"],["七 (しち\\なな)","7"],["八 (はち)","8"],["九 (く\\きゅう)","9"],["十 (じゅう)","10"]],
       "Tens":   [["二十 (にじゅう)","20"],["三十 (さんじゅう)","30"],["四十 (よんじゅう)","40"],["五十 (ごじゅう)","50"],
                  ["六十 (ろくじゅう)","60"],["七十 (ななじゅう)","70"],["八十 (はちじゅう)","80"],["九十 (きゅうじゅう)","90"]],
       "Hundreds":[["百 (ひゃく)","100"],["二百 (にひゃく)","200"],["三百 (さんびゃく)","300"],["六百 (ろっぴゃく)","600"],
@@ -1829,23 +1828,16 @@ function stageNumbers() {
  *    the content fits inside .card-stage without horizontal overflow.
  * ============================================================ */
 
-// Split on any sentence/clause punctuation, keeping the punctuation on
-// the line it ended. Covers ASCII and Japanese variants:
-//   .  ,  /  ?  !     ←  ASCII
-//   。  、  ・  ？  ！  ←  Japanese
+// Split text into lines on the explicit line-break separator `\`
+// (also literal newlines, for completeness). Punctuation no longer
+// triggers automatic wrapping — use `\` wherever you want a new line.
 function splitSentences(text) {
   if (text == null) return [];
   const s = String(text);
-  // First hard-break on \n (stripped), then split each piece on punctuation.
-  const out = [];
-  for (const part of s.split(/\n/)) {
-    const matches = part.match(/[^.,\/?!。、・？！]*[.,\/?!。、・？！]?/g) || [];
-    for (const m of matches) {
-      const t = m.replace(/\//g, "").trim();
-      if (t) out.push(t);
-    }
-  }
-  return out;
+  return s
+    .split(/[\\\n]/)
+    .map(x => x.trim())
+    .filter(x => x.length > 0);
 }
 
 // Parse an answer string. Returns { main: [lines], reading: [lines] | null }.
