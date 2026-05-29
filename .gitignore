@@ -1,0 +1,20 @@
+# Rust build artifacts
+/target/
+**/*.rs.bk
+*.pdb
+
+# Local vocab data — users keep their own
+/vocab.json
+/.vocab.json
+
+# Atomic-write temp files (kanaweb-server writes ".vocab.json.tmp.<pid>")
+*.tmp.*
+
+# Editor / OS junk
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
